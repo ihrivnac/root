@@ -87,7 +87,7 @@ ifeq ($(XRDNETUTIL),yes)
 PROOFXLIBEXTRA += -lXrdNetUtil
 endif
 else
-PROOFXLIBEXTRA += $(XROOTDDIRL) -lXrdUtils -lXrdClient
+PROOFXLIBEXTRA += $(XROOTDDIRL) -lXrdUtils -lXrdClient -lRIO
 endif
 endif
 
