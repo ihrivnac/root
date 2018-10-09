@@ -704,9 +704,9 @@ Bool_t TNetXNGFile::GetVectorReadLimits()
    URL lrl(lasturl);
    //local redirect will split vector reads into multiple local reads anyway,
    // so we are fine with the default values
-   if(0==lrl.GetProtocol().compare("file") &&
-      0==lrl.GetHostId().compare("localhost")){
-       if (gDebug>=1) 
+   if(lrl.GetProtocol().compare("file") == 0 &&
+      lrl.GetHostId().compare("localhost") == 0){
+       if (gDebug >= 1)
           Info("GetVectorReadLimits","Local redirect, using default values");
        return kTRUE;
    }
@@ -915,4 +915,3 @@ void TNetXNGFile::SetEnv()
                             || strlen(cenv) <= 0))
       gSystem->Setenv("XrdSecPWDVERIFYSRV",    val.Data());
 }
-
