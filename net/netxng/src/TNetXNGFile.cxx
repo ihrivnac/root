@@ -708,8 +708,7 @@ Bool_t TNetXNGFile::GetVectorReadLimits()
       return kTRUE;
 
    std::string lasturl;
-   fFile->GetProperty("LastURL",lasturl);
-   URL lrl(lasturl);
+   URL lrl(fFile->GetLastURL());
    //local redirect will split vector reads into multiple local reads anyway,
    // so we are fine with the default values
    if(lrl.GetProtocol().compare("file") == 0 &&
