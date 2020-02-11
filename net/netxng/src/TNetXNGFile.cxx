@@ -18,6 +18,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "TArchiveFile.h"
 #include "TNetXNGFile.h"
 #include "TEnv.h"
 #include "TSystem.h"
@@ -263,6 +264,9 @@ Long64_t TNetXNGFile::GetSize() const
 {
    // Get the file size. Returns -1 in the case that the file could not be
    // stat'ed.
+   if (fArchive && fArchive->GetMember()) {
+     return fArchive->GetMember()->GetDecompressedSize();
+   }
 
    using namespace XrdCl;
 
