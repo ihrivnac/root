@@ -18,6 +18,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "TArchiveFile.h"
 #include "TNetXNGFile.h"
 #include "TEnv.h"
 #include "TSystem.h"
@@ -111,9 +112,18 @@ TNetXNGFile::TNetXNGFile(const char *url,
                          Option_t   *mode,
                          const char *title,
                          Int_t       compress,
+                         Int_t       netopt,
+                         Bool_t      parallelopen) :
+	TNetXNGFile(url,0,mode,title,compress,netopt,parallelopen){}
+
+TNetXNGFile::TNetXNGFile(const char *url,
+		         const char *lurl,
+                         Option_t   *mode,
+                         const char *title,
+                         Int_t       compress,
                          Int_t       /*netopt*/,
                          Bool_t      parallelopen) :
-   TFile(url, "NET", title, compress)
+   TFile((lurl ? lurl : url), "NET", title, compress)
 {
    // Constructor
    //
@@ -254,6 +264,9 @@ Long64_t TNetXNGFile::GetSize() const
 {
    // Get the file size. Returns -1 in the case that the file could not be
    // stat'ed.
+   if (fArchive && fArchive->GetMember()) {
+     return fArchive->GetMember()->GetDecompressedSize();
+   }
 
    using namespace XrdCl;
 
@@ -698,6 +711,17 @@ Bool_t TNetXNGFile::GetVectorReadLimits()
    if (!fQueryReadVParams)
       return kTRUE;
 
+   std::string lasturl;
+   URL lrl(fFile->GetLastURL());
+   //local redirect will split vector reads into multiple local reads anyway,
+   // so we are fine with the default values
+   if(lrl.GetProtocol().compare("file") == 0 &&
+      lrl.GetHostId().compare("localhost") == 0){
+       if (gDebug >= 1)
+          Info("GetVectorReadLimits","Local redirect, using default values");
+       return kTRUE;
+   }
+
 #if XrdVNUMBER >= 40000
    std::string dataServerStr;
    if( !fFile->GetProperty( "DataServer", dataServerStr ) )
@@ -902,4 +926,3 @@ void TNetXNGFile::SetEnv()
                             || strlen(cenv) <= 0))
       gSystem->Setenv("XrdSecPWDVERIFYSRV",    val.Data());
 }
-
