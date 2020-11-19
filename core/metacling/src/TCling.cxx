@@ -3126,7 +3126,9 @@ void TCling::UpdateListOfLoadedSharedLibraries()
       // Skip non-dylibs
       if (mh->filetype == MH_DYLIB) {
          if (const char* imageName = _dyld_get_image_name(imageIndex)) {
-            RegisterLoadedSharedLibrary(imageName);
+	    struct stat dummy;
+	    if (stat (imageName, &dummy) == 0)
+	      RegisterLoadedSharedLibrary(imageName);
          }
       }
 
