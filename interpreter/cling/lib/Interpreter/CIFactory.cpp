@@ -107,6 +107,22 @@ namespace {
                                        llvm::SmallVectorImpl<char>& Buf,
                                        AdditionalArgList& Args,
                                        bool Verbose) {
+    // ALICE: let's see if the path is available as a predefined env variable
+    // to save repeated system calls when ROOT is initialized for each process
+    // in a many process system
+    auto PrefCppSystemIncl = getenv("ROOT_CPPSYSINCL");
+    if (PrefCppSystemIncl != nullptr) {
+      llvm::StringRef PathsString(PrefCppSystemIncl);
+      llvm::SmallVector<StringRef, 10> Paths;
+      PathsString.split(Paths, ":");
+      for (auto& P : Paths) {
+        P = P.trim();
+        Args.addArgument("-cxx-isystem", P.str());
+      }
+      return;
+    }
+
+    // execute default dynamic search
     std::string CppInclQuery("LC_ALL=C ");
     CppInclQuery.append(Compiler);
 

@@ -4633,6 +4633,20 @@ static const char *DynamicPath(const char *newpath = 0, Bool_t reset = kFALSE)
       dynpath += "/usr/local/lib:/usr/X11R6/lib:/usr/lib:/lib:";
       dynpath += "/lib/x86_64-linux-gnu:/usr/local/lib64:/usr/lib64:/lib64:";
 #else
+      // ALICE: Let's see if an outside entity gave us the system path.
+      // This is a power-user feature with the goal to prevent repeated sys-calls (popen + sh) and to
+      // having to search repeatetly through potentially long strings (when the LD_LIBRARY_PATH of the software stack
+      // is very large).
+      // The power-user might define this during build or during setup of the software stack.
+      auto ldsyspath = getenv("ROOT_LDSYSPATH");
+      if (ldsyspath != nullptr) {
+         dynpath += ldsyspath;
+         // some code duplication here in order to keep patch
+         // minimal and easily applicable
+         dynpath.ReplaceAll("::", ":");
+         return dynpath;
+      }
+
       // trick to get the system search path
       std::string cmd("LD_DEBUG=libs LD_PRELOAD=DOESNOTEXIST ls 2>&1");
       FILE *pf = popen(cmd.c_str (), "r");
