@@ -1372,7 +1372,7 @@ TObject *TROOT::FindSpecialObject(const char *name, void *&where)
       }
    }
    if (!temp) return nullptr;
-   if (!ROOT::Detail::HasBeenDeleted(temp)) return temp;
+   if (temp->TestBit(kNotDeleted)) return temp;
    return nullptr;
 }
 

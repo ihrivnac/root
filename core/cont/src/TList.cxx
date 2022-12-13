@@ -440,12 +440,12 @@ void TList::Clear(Option_t *option)
       // delete only heap objects marked OK to clear
       auto obj = tlk->GetObject();
       if (!nodel && obj) {
-         if (ROOT::Detail::HasBeenDeleted(obj)) {
+         if (!obj->TestBit(kNotDeleted)) {
             Error("Clear", "A list is accessing an object (%p) already deleted (list name = %s)",
                   obj, GetName());
          } else if (obj->IsOnHeap()) {
             if (obj->TestBit(kCanDelete)) {
-               if (!ROOT::Detail::HasBeenDeleted(obj)) {
+               if (obj->TestBit(kNotDeleted)) {
                   TCollection::GarbageCollect(obj);
                }
             }
@@ -501,7 +501,7 @@ void TList::Delete(Option_t *option)
 
          // delete only heap objects
          auto obj = tlk->GetObject();
-         if (obj && ROOT::Detail::HasBeenDeleted(obj))
+         if (obj && !obj->TestBit(kNotDeleted))
             Error("Delete", "A list is accessing an object (%p) already deleted (list name = %s)",
                   obj, GetName());
          else if (obj && obj->IsOnHeap())
@@ -530,7 +530,7 @@ void TList::Delete(Option_t *option)
          // delete only heap objects
          auto obj = tlk->GetObject();
          tlk->SetObject(nullptr);
-         if (obj && ROOT::Detail::HasBeenDeleted(obj))
+         if (obj && !obj->TestBit(kNotDeleted))
             Error("Delete", "A list is accessing an object (%p) already deleted (list name = %s)",
                   obj, GetName());
          else if (obj && obj->IsOnHeap())
@@ -643,7 +643,7 @@ TObjLink *TList::FindLink(const TObject *obj, Int_t &idx) const
    while (lnk) {
       object = lnk->GetObject();
       if (object) {
-         if (!ROOT::Detail::HasBeenDeleted(object)) {
+         if (object->TestBit(kNotDeleted)) {
             if (object->IsEqual(obj)) return lnk;
          }
       }
@@ -773,7 +773,7 @@ void TList::RecursiveRemove(TObject *obj)
       auto cached = fCache.lock();
       if (cached && cached->fNext.get() == nullptr && cached->fPrev.lock().get() == nullptr) {
          TObject *ob = cached->GetObject();
-         if (ob && !ROOT::Detail::HasBeenDeleted(ob)) {
+         if (ob && ob->TestBit(kNotDeleted)) {
             ob->RecursiveRemove(obj);
          }
       }
@@ -787,7 +787,7 @@ void TList::RecursiveRemove(TObject *obj)
    while (lnk.get()) {
       next = lnk->fNext;
       TObject *ob = lnk->GetObject();
-      if (ob && !ROOT::Detail::HasBeenDeleted(ob)) {
+      if (ob && ob->TestBit(kNotDeleted)) {
          if (ob->IsEqual(obj)) {
             lnk->SetObject(nullptr);
             if (lnk == fFirst) {

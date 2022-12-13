@@ -149,7 +149,7 @@ void TButton::Draw(Option_t *option)
 void TButton::ExecuteEvent(Int_t event, Int_t px, Int_t py)
 {
    //check case where pressing a button deletes itself
-   if (ROOT::Detail::HasBeenDeleted(this)) return;
+   if (!TestBit(kNotDeleted)) return;
 
    if (IsEditable()) {
       TPad::ExecuteEvent(event,px,py);
@@ -202,7 +202,7 @@ void TButton::ExecuteEvent(Int_t event, Int_t px, Int_t py)
          gROOT->ProcessLine(GetMethod());
       }
       //check case where pressing a button deletes itself
-      if (ROOT::Detail::HasBeenDeleted(this)) return;
+      if (!TestBit(kNotDeleted)) return;
       SetBorderMode(1);
       Modified();
       Update();

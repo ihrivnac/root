@@ -126,7 +126,7 @@ void TContextMenu::Action(TClassMenuItem *menuitem)
 
    if (object) {
       // If object deleted, remove from popup and return
-      if (ROOT::Detail::HasBeenDeleted(object)) {
+      if (!(object->TestBit(kNotDeleted))) {
          menuitem->SetType(TClassMenuItem::kPopupSeparator);
          menuitem->SetCall(0,"");
          return;

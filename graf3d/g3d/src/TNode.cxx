@@ -384,7 +384,7 @@ TNode *TNode::GetNode(const char *name) const
    TObjLink *lnk = fNodes->FirstLink();
    while (lnk) {
       node = (TNode *)lnk->GetObject();
-      if (!ROOT::Detail::HasBeenDeleted(node)) {
+      if (node->TestBit(kNotDeleted)) {
          nodefound = node->GetNode(name);
          if (nodefound) return nodefound;
       }

@@ -75,7 +75,6 @@ class CppCompleter(object):
     ...     print(suggestion)
     TROOT::IsA
     TROOT::IsBatch
-    TROOT::IsDestructed
     TROOT::IsEqual
     TROOT::IsEscaped
     TROOT::IsExecutingMacro

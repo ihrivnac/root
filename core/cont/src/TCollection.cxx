@@ -584,7 +584,7 @@ void TCollection::RecursiveRemove(TObject *obj)
    TObject *object;
 
    while ((object = next())) {
-      if (!ROOT::Detail::HasBeenDeleted(object)) object->RecursiveRemove(obj);
+      if (object->TestBit(kNotDeleted)) object->RecursiveRemove(obj);
    }
 }
 
