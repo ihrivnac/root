@@ -141,11 +141,11 @@ public:
 protected:
    /// The current transport engine in use. In case of a multi-run the TMCManager
    /// will update this whenever the engine changes.
-   TVirtualMC *fMC;
+   TVirtualMC *fMC; //!
 
    /// Pointer to requested TMCManager which will only be instantiated by a call
    /// to RequestMCManager()
-   TMCManager *fMCManager;
+   TMCManager *fMCManager; //!
 
 private:
    // static data members
