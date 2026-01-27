@@ -100,6 +100,8 @@
 #pragma link C++ class TGeoNavigator + ;
 #pragma link C++ class TGeoNavigatorArray;
 #pragma link C++ class TGDMLMatrix + ;
+#pragma link C++ class TGeoVGAdapter - ;
+#pragma link C++ class TGeoVGAdapter<vecgeom::cxx::SUnplacedTube<vecgeom::cxx::TubeTypes::UniversalTube>>+;
 #pragma link C++ struct std::map < std::thread::id, TGeoNavigatorArray * > ;
 #pragma link C++ struct std::pair < std::thread::id, TGeoNavigatorArray * > ;
 #pragma link C++ struct std::map < std::thread::id, Int_t > ;

@@ -1,0 +1,289 @@
+// Author: Mihaela Gheata   30/03/16
+/*************************************************************************
+ * Copyright (C) 1995-2016, Rene Brun and Fons Rademakers.               *
+ * All rights reserved.                                                  *
+ *                                                                       *
+ * For the licensing terms see $ROOTSYS/LICENSE.                         *
+ * For the list of contributors see $ROOTSYS/README/CREDITS.             *
+ *************************************************************************/
+
+/** \class TGeoVGAdapter
+\ingroup Geometry_classes
+
+Bridge class for using a VecGeom solid as TGeoShape.
+*/
+
+// ////////////////////////////////////////////////////////////////////////////////
+// /// Default constructor
+
+// TGeoVGAdapter<UnplacedVolume_t>::TGeoVGAdapter(TGeoShape *shape, vecgeom::cxx::VPlacedVolume *vgshape)
+//    : TGeoBBox(shape->GetName(), 0, 0, 0), fVGShape(vgshape), fShape(shape)
+// {
+//    // Copy box parameters from the original ROOT shape
+//    const TGeoBBox *box = (const TGeoBBox *)shape;
+//    TGeoBBox::SetBoxDimensions(box->GetDX(), box->GetDY(), box->GetDZ());
+//    memcpy(fOrigin, box->GetOrigin(), 3 * sizeof(Double_t));
+// }
+
+// ////////////////////////////////////////////////////////////////////////////////
+// /// Destructor
+
+// TGeoVGAdapter<UnplacedVolume_t>::~TGeoVGAdapter()
+// {
+//    // Cleanup only the VecGeom solid, the ROOT shape is cleaned by TGeoManager
+//    delete fVGShape;
+// }
+
+
+#ifndef ROOT_TGeoVGAdapter_icc
+#define ROOT_TGeoVGAdapter_icc
+
+////////////////////////////////////////////////////////////////////////////////
+/// Default constructor
+
+// template <class UnplacedVolume_t>
+// TGeoVGAdapter<UnplacedVolume_t>::TGeoVGAdapter(const TString& name)
+//   : TGeoBBox()
+// {
+//   TGeoBBox::SetName(name.Data()); 
+
+//   // kHalfTolerance = 0.5*kCarTolerance;
+//   TGeoBBox::ComputeBBox();
+// }
+
+////////////////////////////////////////////////////////////////////////////////
+/// Constructor templated on arguments for UnplacedVolume_t
+
+template <class UnplacedVolume_t>
+template <typename... T>
+TGeoVGAdapter<UnplacedVolume_t>::TGeoVGAdapter(const TString& name, const T &... params)
+  : TGeoBBox(), UnplacedVolume_t(params...)
+{
+  TGeoBBox::SetName(name.Data()); 
+
+  // kHalfTolerance = 0.5*kCarTolerance;
+  TGeoBBox::ComputeBBox();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Destructor
+
+template <class UnplacedVolume_t>
+TGeoVGAdapter<UnplacedVolume_t>::~TGeoVGAdapter()
+{
+  // delete fPolyhedron; fPolyhedron = nullptr;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// operator==
+
+template <class UnplacedVolume_t>
+Bool_t TGeoVGAdapter<UnplacedVolume_t>::
+operator==(const TGeoVGAdapter& rhs) const
+{
+  return (this == &rhs) ? true : false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Copy constructor
+
+// template <class UnplacedVolume_t>
+// TGeoVGAdapter<UnplacedVolume_t>::
+// TGeoVGAdapter(const TGeoVGAdapter& rhs)
+//   : TGeoBBox(rhs), UnplacedVolume_t(rhs)
+// {
+//   // kHalfTolerance = 0.5*kCarTolerance;
+// }
+
+////////////////////////////////////////////////////////////////////////////////
+/// operator=
+
+// template <class UnplacedVolume_t>
+// TGeoVGAdapter<UnplacedVolume_t>& TGeoVGAdapter<UnplacedVolume_t>::
+// operator=(const TGeoVGAdapter& rhs)
+// {
+//   // Check assignment to self
+//   //
+//   if (this == &rhs)
+//   {
+//     return *this;
+//   }
+
+//   // Copy base class data
+//   //
+//   TGeoBBox::operator=(rhs);
+//   UnplacedVolume_t::operator=(rhs);
+
+//   // Copy data
+//   //
+//   // fRebuildPolyhedron = false;
+//   // delete fPolyhedron; fPolyhedron = nullptr;
+//   // kHalfTolerance = 0.5*kCarTolerance;
+
+//   return *this;
+// }
+
+////////////////////////////////////////////////////////////////////////////////
+/// Compute bounding box.
+
+// void TGeoVGAdapter<UnplacedVolume_t>::ComputeBBox()
+// {
+//    fShape->ComputeBBox();
+// }
+
+////////////////////////////////////////////////////////////////////////////////
+/// Returns analytic capacity of the solid
+
+// Double_t TGeoVGAdapter<UnplacedVolume_t>::Capacity() const
+// {
+//    return fVGShape->Capacity();
+// }
+
+////////////////////////////////////////////////////////////////////////////////
+/// Normal computation.
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::ComputeNormal(
+  const Double_t *point, const Double_t * /*dir*/, Double_t *norm) const
+{
+   vecgeom::cxx::Vector3D<Double_t> vnorm;
+   UnplacedVolume_t::Normal(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]), vnorm);
+   norm[0] = vnorm.x();
+   norm[1] = vnorm.y(), norm[2] = vnorm.z();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Test if point is inside this shape.
+
+template <class UnplacedVolume_t>
+Bool_t TGeoVGAdapter<UnplacedVolume_t>::Contains(const Double_t *point) const
+{
+   return (UnplacedVolume_t::Contains(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2])));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class UnplacedVolume_t>
+Double_t TGeoVGAdapter<UnplacedVolume_t>::DistFromInside(
+  const Double_t *point, const Double_t *dir, Int_t /*iact*/, Double_t step,
+  Double_t * /*safe*/) const
+{
+   Double_t dist = UnplacedVolume_t::DistanceToOut(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]),
+                                           vecgeom::cxx::Vector3D<Double_t>(dir[0], dir[1], dir[2]), step);
+   return ((dist < 0.) ? 0. : dist);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class UnplacedVolume_t>
+Double_t TGeoVGAdapter<UnplacedVolume_t>::DistFromOutside(
+  const Double_t *point, const Double_t *dir, Int_t /*iact*/, Double_t step,
+  Double_t * /*safe*/) const
+{
+   Double_t dist = UnplacedVolume_t::DistanceToIn(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]),
+                                          vecgeom::cxx::Vector3D<Double_t>(dir[0], dir[1], dir[2]), step);
+   return ((dist < 0.) ? 0. : dist);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+template <class UnplacedVolume_t>
+Double_t TGeoVGAdapter<UnplacedVolume_t>::Safety(const Double_t *point, Bool_t in) const
+{
+   Double_t safety = (in) ? UnplacedVolume_t::SafetyToOut(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]))
+                          : UnplacedVolume_t::SafetyToIn(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]));
+   return ((safety < 0.) ? 0. : safety);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Print info about the VecGeom solid
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::InspectShape() const
+{
+   UnplacedVolume_t::Print();
+   printf("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Check the inside status for each of the points in the array.
+/// Input: Array of point coordinates + vector size
+/// Output: Array of Booleans for the inside of each point
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::Contains_v(
+  const Double_t *points, Bool_t *inside, Int_t vecsize) const
+{
+   for (Int_t i = 0; i < vecsize; i++)
+      inside[i] = Contains(&points[3 * i]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Compute the normal for an array o points so that norm.dot.dir is positive
+/// Input: Arrays of point coordinates and directions + vector size
+/// Output: Array of normal directions
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::ComputeNormal_v(
+  const Double_t *points, const Double_t *dirs, Double_t *norms, Int_t vecsize)
+{
+   for (Int_t i = 0; i < vecsize; i++)
+      ComputeNormal(&points[3 * i], &dirs[3 * i], &norms[3 * i]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Compute distance from array of input points having directions specified by dirs. Store output in dists
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::DistFromInside_v(
+  const Double_t *points, const Double_t *dirs, Double_t *dists, Int_t vecsize,
+  Double_t *step) const
+{
+   for (Int_t i = 0; i < vecsize; i++)
+      dists[i] = DistFromInside(&points[3 * i], &dirs[3 * i], 3, step[i]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Compute distance from array of input points having directions specified by dirs. Store output in dists
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::DistFromOutside_v(
+  const Double_t *points, const Double_t *dirs, Double_t *dists, Int_t vecsize,
+  Double_t *step) const
+{
+   for (Int_t i = 0; i < vecsize; i++)
+      dists[i] = DistFromOutside(&points[3 * i], &dirs[3 * i], 3, step[i]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Compute safe distance from each of the points in the input array.
+/// Input: Array of point coordinates, array of statuses for these points, size of the arrays
+/// Output: Safety values
+
+template <class UnplacedVolume_t>
+void TGeoVGAdapter<UnplacedVolume_t>::Safety_v(
+  const Double_t *points, const Bool_t *inside, Double_t *safe, Int_t vecsize) const
+{
+   for (Int_t i = 0; i < vecsize; i++)
+      safe[i] = Safety(&points[3 * i], inside[i]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Stream an object of class TGeoVGAdapter.
+
+// void TGeoVGAdapter<UnplacedVolume_t>::Streamer(TBuffer &R__b)
+// {
+//    if (R__b.IsReading()) {
+//       R__b.ReadClassBuffer(TGeoVGAdapter<UnplacedVolume_t>::Class(), this);
+//       if (!TVirtualGeoConverter::Instance()) {
+//          Fatal("Streamer",
+//                "This geometry contains solids converted to VecGeom and needs a VecGeom-enabled ROOT to read.");
+//       }
+//       fVGShape = CreateVecGeomSolid(fShape);
+//    } else {
+//       R__b.WriteClassBuffer(TGeoVGAdapter<UnplacedVolume_t>::Class(), this);
+//    }
+// }
+
+#endif // ROOT_TGeoVGAdapter_icc
+

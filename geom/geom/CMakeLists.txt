@@ -65,6 +65,9 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TVirtualGeoPainter.h
     TVirtualGeoTrack.h
     TVirtualMagField.h
+    TGeoVGAdapter.h
+    TGeoVGAdapter.icc
+    TGeoVGTube.h
   SOURCES
     src/TGDMLMatrix.cxx
     src/TGeoArb8.cxx
@@ -117,6 +120,10 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TVirtualGeoPainter.cxx
     src/TVirtualGeoTrack.cxx
     src/TVirtualMagField.cxx
+    src/TGeoVGTube.cxx
+  LIBRARIES
+    ${VECGEOM_LIBRARIES}
+    ${CMAKE_DL_LIBS}
   DEPENDENCIES
     Thread
     RIO
