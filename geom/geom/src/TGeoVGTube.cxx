@@ -1,6 +1,4 @@
 // @(#)root/geom:$Id$
-// Author: Andrei Gheata   24/10/01
-// TGeoVGTube::Contains() and DistFromInside/In() implemented by Mihaela Gheata
 
 /*************************************************************************
  * Copyright (C) 1995-2000, Rene Brun and Fons Rademakers.               *
@@ -15,7 +13,7 @@
 
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
-#include "TGeoTube.h"
+#include "TGeoTube.h"   // For tubeseg, ctubs
 #include "TVirtualGeoPainter.h"
 #include "TBuffer3D.h"
 #include "TBuffer3DTypes.h"
@@ -53,7 +51,7 @@ TGeoVGTube::TGeoVGTube(Double_t rmin, Double_t rmax, Double_t dz)
 /// Default constructor specifying minimum and maximum radius
 
 TGeoVGTube::TGeoVGTube(const char *name, Double_t rmin, Double_t rmax, Double_t dz)
-  : Base_t("", rmin, rmax, dz, 0., vecgeom::kTwoPi)
+  : Base_t(name, rmin, rmax, dz, 0., vecgeom::kTwoPi)
 {
    SetShapeBit(TGeoShape::kGeoTube);
    if ((dz < 0) || (rmin < 0) || (rmax < 0)) {
@@ -422,6 +420,7 @@ TGeoVGTube::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t n
       finder = new TGeoPatternCylPhi(voldiv, ndiv, start, end);
       voldiv->SetFinder(finder);
       finder->SetDivIndex(voldiv->GetNdaughters());
+      // TODO Change to VG
       shape = new TGeoTubeSeg(rmin(), rmax(), z(), -step / 2, step / 2);
       vol = new TGeoVolume(divname, shape, voldiv->GetMedium());
       vmulti = gGeoManager->MakeVolumeMulti(divname, voldiv->GetMedium());
@@ -544,8 +543,6 @@ TGeoShape *TGeoVGTube::GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix * /*mat
 
 void TGeoVGTube::InspectShape() const
 {
-// TO DO
-
    printf("*** Shape %s: TGeoVGTube ***\n", GetName());
    printf("    Rmin = %11.5f\n", rmin());
    printf("    Rmax = %11.5f\n", rmax());

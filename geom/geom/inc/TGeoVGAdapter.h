@@ -16,7 +16,37 @@
 #include <VecGeom/base/Global.h>
 #include <VecGeom/base/Vector3D.h>
 
-#include <set>
+#ifdef __ROOTCLING__
+// Mocking the base class for rootcling to allow inheritance and 'override'
+namespace vecgeom {
+  class VUnplacedVolume {
+  public:
+    virtual ~VUnplacedVolume() {}
+    
+    virtual bool Contains(Vector3D<Precision> const&) const { return false; }
+    virtual void Extent(Vector3D<Precision>&, Vector3D<Precision>&) const {}
+    virtual bool Normal(Vector3D<Precision> const&, Vector3D<Precision>&) const { return false; }
+    virtual Precision DistanceToIn(Vector3D<Precision> const&, Vector3D<Precision> const&, const Precision) const { return 0; }
+    virtual Precision DistanceToOut(Vector3D<Precision> const&, Vector3D<Precision> const&, const Precision) const { return 0; }
+    virtual Precision SafetyToIn(Vector3D<Precision> const&) const { return 0; }
+    virtual Precision SafetyToOut(Vector3D<Precision> const&) const { return 0; }
+    virtual EnumInside Inside(Vector3D<Precision> const&) const { return kOutside; }
+    virtual Precision Capacity() const { return 0; }
+    virtual void Print() const { }
+    
+    // This was the missing function causing the 'override' error
+    virtual Vector3D<Precision> SamplePointOnSurface() const { return Vector3D<Precision>(0,0,0); }
+    
+    // Satisfy warnings by returning a dummy address instead of nullptr
+    static void* operator new(size_t s) noexcept { return (void*)0x11; }
+    static void* operator new[](size_t s) noexcept { return (void*)0x11; }
+    static void operator delete(void*) noexcept {}
+    static void operator delete[](void*) noexcept {}
+  };
+}
+#else
+#include <VecGeom/volumes/UnplacedVolume.h>
+#endif
 
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //

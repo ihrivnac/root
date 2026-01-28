@@ -68,6 +68,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoVGAdapter.h
     TGeoVGAdapter.icc
     TGeoVGTube.h
+    TGeoVGTubeSeg.h
   SOURCES
     src/TGDMLMatrix.cxx
     src/TGeoArb8.cxx
@@ -121,6 +122,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TVirtualGeoTrack.cxx
     src/TVirtualMagField.cxx
     src/TGeoVGTube.cxx
+    src/TGeoVGTubeSeg.cxx
   LIBRARIES
     ${VECGEOM_LIBRARIES}
     ${CMAKE_DL_LIBS}

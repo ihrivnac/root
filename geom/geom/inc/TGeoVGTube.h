@@ -16,11 +16,27 @@
 //
 // Class description:
 //
-// Wrapper class for TGeoVGTube to make use of VecGeom Tube.
+// Wrapper class for TGeoTube to make use of VecGeom Tube.
 
 #include "TGeoVGAdapter.h"
 
+#ifdef __ROOTCLING__
+namespace vecgeom {
+  // Providing a mock definition (Complete Type) for rootcling
+  class GenericUnplacedTube : public VUnplacedVolume {
+  public:
+    // Define the specific getters used in the TGeoVGTube methods
+    double rmin() const { return 0; }
+    double rmax() const { return 0; }
+    double z() const { return 0; }
+    double sphi() const { return 0; }
+    double dphi() const { return 0; }
+  };
+}
+#else
+// The real build uses the actual VecGeom headers
 #include <VecGeom/volumes/UnplacedTube.h>
+#endif
 
 class TGeoVGTube : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {  
                             // in GenericUnplacedTube is used in G$
