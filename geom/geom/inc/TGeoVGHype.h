@@ -81,12 +81,13 @@ public:
    Double_t GetRmin() const { return Base_t::GetRmin(); }
    Double_t GetRmax() const { return Base_t::GetRmax(); }
    Double_t GetDz() const { return Base_t::GetDz(); }
-   Double_t GetStIn() const { return Base_t::GetStIn(); }
-   Double_t GetStOut() const { return Base_t::GetStOut(); }
+   Double_t GetStIn() const;
+   Double_t GetStOut() const;
    Bool_t HasInner() const { return !TestShapeBit(kGeoRSeg); }
    Bool_t HasRmin() const { return (Base_t::GetRmin() > 0) ? kTRUE : kFALSE; }
    Double_t RadiusHypeSq(Double_t z, Bool_t inner) const;
    Double_t ZHypeSq(Double_t r, Bool_t inner) const;
+
    void InspectShape() const override;
    Bool_t IsCylType() const override { return kTRUE; }
    TBuffer3D *MakeBuffer3D() const override;

@@ -36,7 +36,7 @@
 
 TGeoVGCtub::TGeoVGCtub(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2, Double_t lx, Double_t ly,
                    Double_t lz, Double_t tx, Double_t ty, Double_t tz)
-   : Base_t("", rmin, rmax, dz, kDegToRad * (phi2 - phi1), lx, ly, lz, tx, ty, tz)
+   : Base_t("", rmin, rmax, dz, phi1 * TMath::DegToRad(), (phi2 - phi1) * TMath::DegToRad(), lx, ly, lz, tx, ty, tz)
 {
    fNlow[0] = lx;
    fNlow[1] = ly;
@@ -54,7 +54,7 @@ TGeoVGCtub::TGeoVGCtub(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1,
 
 TGeoVGCtub::TGeoVGCtub(const char *name, Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2,
                    Double_t lx, Double_t ly, Double_t lz, Double_t tx, Double_t ty, Double_t tz)
-   : Base_t(name, rmin, rmax, dz, kDegToRad * (phi2 - phi1), lx, ly, lz, tx, ty, tz)
+   : Base_t(name, rmin, rmax, dz, phi1 * TMath::DegToRad(), (phi2 - phi1) * TMath::DegToRad(), lx, ly, lz, tx, ty, tz)
 {
    fNlow[0] = lx;
    fNlow[1] = ly;
@@ -96,8 +96,8 @@ Double_t TGeoVGCtub::Capacity() const
 
 void TGeoVGTubeSeg::InitTrigonometry()
 {
-   Double_t phi1 = sphi() * TMath::DegToRad();
-   Double_t phi2 = (sphi() + dphi()) * TMath::DegToRad();
+   Double_t phi1 = sphi();
+   Double_t phi2 = (sphi() + dphi());
    fC1 = TMath::Cos(phi1);
    fS1 = TMath::Sin(phi1);
    fC2 = TMath::Cos(phi2);
@@ -613,8 +613,8 @@ void TGeoVGCtub::InspectShape() const
    printf("    Rmin = %11.5f\n", rmin());
    printf("    Rmax = %11.5f\n", rmax());
    printf("    dz   = %11.5f\n", z());
-   printf("    phi1 = %11.5f\n", sphi());
-   printf("    phi2 = %11.5f\n", sphi() + dphi());
+   printf("    phi1 = %11.5f\n", sphi()* TMath::RadToDeg());
+   printf("    phi2 = %11.5f\n", (sphi() + dphi()) * TMath::RadToDeg());
    printf("    lx = %11.5f\n", fNlow[0]);
    printf("    ly = %11.5f\n", fNlow[1]);
    printf("    lz = %11.5f\n", fNlow[2]);
@@ -669,8 +669,8 @@ void TGeoVGCtub::SavePrimitive(std::ostream &out, Option_t * /*option*/ /*= ""*/
    out << "   rmin = " << rmin() << ";" << std::endl;
    out << "   rmax = " << rmax() << ";" << std::endl;
    out << "   dz   = " << z() << ";" << std::endl;
-   out << "   phi1 = " << sphi() << ";" << std::endl;
-   out << "   phi2 = " << sphi() + dphi() << ";" << std::endl;
+   out << "   phi1 = " << sphi() * TMath::RadToDeg() << ";" << std::endl;
+   out << "   phi2 = " << (sphi() + dphi()) * TMath::RadToDeg() << ";" << std::endl;
    out << "   lx   = " << fNlow[0] << ";" << std::endl;
    out << "   ly   = " << fNlow[1] << ";" << std::endl;
    out << "   lz   = " << fNlow[2] << ";" << std::endl;
@@ -680,6 +680,22 @@ void TGeoVGCtub::SavePrimitive(std::ostream &out, Option_t * /*option*/ /*= ""*/
    out << "   TGeoShape *" << GetPointerName() << " = new TGeoVGCtub(\"" << GetName()
        << "\",rmin,rmax,dz,phi1,phi2,lx,ly,lz,tx,ty,tz);" << std::endl;
    TObject::SetBit(TGeoShape::kGeoSavePrimitive);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Return phi1
+
+Double_t TGeoVGCtub::GetPhi1() const
+{
+   return sphi() * TMath::RadToDeg();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Return phi2
+
+Double_t TGeoVGCtub::GetPhi2() const
+{
+   return (sphi() + dphi()) * TMath::RadToDeg();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -694,12 +710,12 @@ void TGeoVGTubeSeg::SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz,
    auto phi1 = phiStart;
    if (phi1 < 0)
       phi1 += 360.;
-   SetSPhi(phi1);
+   SetSPhi(phi1 * TMath::DegToRad());
    auto phi2 = phiEnd;
    while (phi2 <= phi1)
       phi2 += 360.;
-   SetDPhi(phi2 - phi1);
-   if (TGeoShape::IsSameWithinTolerance(sphi(), sphi() + dphi()))
+   SetDPhi((phi2 - phi1) * TMath::DegToRad());
+   if (TGeoShape::IsSameWithinTolerance(sphi()* TMath::RadToDeg(), (sphi() + dphi()) * TMath::RadToDeg()))
       Fatal("SetTubsDimensions", "In shape %s invalid phi1=%g, phi2=%g\n", GetName(), phi1, phi2);
    InitTrigonometry();
 }

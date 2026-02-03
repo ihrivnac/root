@@ -85,8 +85,8 @@ public:
    Double_t GetRmin() const { return rmin(); }
    Double_t GetRmax() const { return rmax(); }
    Double_t GetDz() const { return z(); }
-   Double_t GetPhi1() const { return sphi(); }
-   Double_t GetPhi2() const { return sphi() + dphi(); }
+   Double_t GetPhi1() const;
+   Double_t GetPhi2() const;
    const Double_t *GetNlow() const { return &fNlow[0]; }
    const Double_t *GetNhigh() const { return &fNhigh[0]; }
    Double_t GetZcoord(Double_t xc, Double_t yc, Double_t zc) const;

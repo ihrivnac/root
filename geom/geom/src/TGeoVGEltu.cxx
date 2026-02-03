@@ -37,7 +37,7 @@ TGeoVGEltu::TGeoVGEltu(Double_t a, Double_t b, Double_t dz)
   : Base_t("", a, b, dz)
 {
    SetShapeBit(TGeoShape::kGeoEltu);
-   // SetEltuDimensions(a, b, dz);
+   SetEltuDimensions(a, b, dz);
    ComputeBBox();
 }
 
@@ -49,7 +49,7 @@ TGeoVGEltu::TGeoVGEltu(const char *name, Double_t a, Double_t b, Double_t dz)
 {
    SetName(name);
    SetShapeBit(TGeoShape::kGeoEltu);
-   // SetEltuDimensions(a, b, dz);
+   SetEltuDimensions(a, b, dz);
    ComputeBBox();
 }
 
@@ -63,7 +63,7 @@ TGeoVGEltu::TGeoVGEltu(Double_t *param)
   : Base_t("", param[0], param[1], param[2])
 {
    SetShapeBit(TGeoShape::kGeoEltu);
-   // SetDimensions(param);
+   SetDimensions(param);
    ComputeBBox();
 }
 

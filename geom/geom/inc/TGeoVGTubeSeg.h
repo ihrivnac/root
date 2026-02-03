@@ -100,8 +100,8 @@ public:
    Double_t GetRmin() const { return rmin(); }
    Double_t GetRmax() const { return rmax(); }
    Double_t GetDz() const { return z(); }
-   Double_t GetPhi1() const { return sphi(); }
-   Double_t GetPhi2() const { return sphi() + dphi(); }
+   Double_t GetPhi1() const;
+   Double_t GetPhi2() const;
    void SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
    void SetDimensions(Double_t *param) override;
    void SetPoints(Double_t *points) const override;

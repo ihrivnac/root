@@ -35,7 +35,7 @@
 /// Constructor specifying hyperboloid parameters.
 
 TGeoVGHype::TGeoVGHype(Double_t rin, Double_t stin, Double_t rout, Double_t stout, Double_t dz)
-  : Base_t("", rin, rout, stin, stout, dz)
+  : Base_t("", rin, rout, stin * TMath::DegToRad(), stout * TMath::DegToRad(), dz)
 {
    SetShapeBit(TGeoShape::kGeoHype);
    SetHypeDimensions();
@@ -49,7 +49,7 @@ TGeoVGHype::TGeoVGHype(Double_t rin, Double_t stin, Double_t rout, Double_t stou
 /// Constructor specifying parameters and name.
 
 TGeoVGHype::TGeoVGHype(const char *name, Double_t rin, Double_t stin, Double_t rout, Double_t stout, Double_t dz)
-  : Base_t(name, rin, rout, stin, stout, dz)
+  : Base_t(name, rin, rout, stin * TMath::DegToRad(), stout * TMath::DegToRad(), dz)
 {
    SetShapeBit(TGeoShape::kGeoHype);
    SetHypeDimensions();
@@ -666,6 +666,22 @@ void TGeoVGHype::SetSegsAndPols(TBuffer3D &buff) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Return StIn
+
+Double_t TGeoVGHype::GetStIn() const
+{
+   return Base_t::GetStIn() * TMath::RadToDeg();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Return StOut
+
+Double_t TGeoVGHype::GetStOut() const
+{
+   return Base_t::GetStOut() * TMath::RadToDeg();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 /// Compute r^2 = x^2 + y^2 at a given z coordinate, for either inner or outer hyperbolas.
 
 Double_t TGeoVGHype::RadiusHypeSq(Double_t z, Bool_t inner) const
@@ -793,9 +809,9 @@ void TGeoVGHype::SavePrimitive(std::ostream &out, Option_t * /*option*/ /*= ""*/
 
 void TGeoVGHype::SetHypeDimensions()
 {
-   fTin = TMath::Tan(GetStIn() * TMath::DegToRad());
+   fTin = TMath::Tan(Base_t::GetStIn());
    fTinsq = fTin * fTin;
-   fTout = TMath::Tan(GetStOut() * TMath::DegToRad());
+   fTout = TMath::Tan(Base_t::GetStOut());
    fToutsq = fTout * fTout;
    if ((GetRmin() == 0) && (GetStIn() == 0))
       SetShapeBit(kGeoRSeg, kTRUE);

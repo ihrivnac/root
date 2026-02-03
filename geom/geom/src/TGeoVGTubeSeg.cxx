@@ -36,7 +36,7 @@
 /// The segment will be from phiStart to phiEnd expressed in degree.
 
 TGeoVGTubeSeg::TGeoVGTubeSeg(Double_t rmin, Double_t rmax, Double_t dz, Double_t phiStart, Double_t phiEnd)
-   : Base_t("", rmin, rmax, dz, phiStart, phiEnd - phiStart)
+   : Base_t("", rmin, rmax, dz, phiStart * TMath::DegToRad(), (phiEnd - phiStart) * TMath::DegToRad())
 {
    SetShapeBit(TGeoShape::kGeoTubeSeg);
    SetTubsDimensions(rmin, rmax, dz, phiStart, phiEnd);
@@ -49,7 +49,7 @@ TGeoVGTubeSeg::TGeoVGTubeSeg(Double_t rmin, Double_t rmax, Double_t dz, Double_t
 
 TGeoVGTubeSeg::TGeoVGTubeSeg(const char *name, Double_t rmin, Double_t rmax, Double_t dz, Double_t phiStart,
                          Double_t phiEnd)
-   : Base_t(name, rmin, rmax, dz, phiStart, phiEnd - phiStart)
+   : Base_t(name, rmin, rmax, dz, phiStart * TMath::DegToRad(), (phiEnd - phiStart) * TMath::DegToRad())
 {
    SetShapeBit(TGeoShape::kGeoTubeSeg);
    SetTubsDimensions(rmin, rmax, dz, phiStart, phiEnd);
@@ -86,8 +86,8 @@ TGeoVGTubeSeg::TGeoVGTubeSeg(Double_t *param)
 
 void TGeoVGTubeSeg::InitTrigonometry()
 {
-   Double_t phi1 = sphi() * TMath::DegToRad();
-   Double_t phi2 = (sphi() + dphi()) * TMath::DegToRad();
+   Double_t phi1 = sphi();
+   Double_t phi2 = sphi() + dphi();
    fC1 = TMath::Cos(phi1);
    fS1 = TMath::Sin(phi1);
    fC2 = TMath::Cos(phi2);
@@ -120,31 +120,31 @@ void TGeoVGTubeSeg::ComputeBBox()
    Double_t ymin = yc[TMath::LocMin(4, &yc[0])];
    Double_t ymax = yc[TMath::LocMax(4, &yc[0])];
 
-   Double_t dp = dphi();
+   Double_t dp = dphi() * TMath::RadToDeg();
    if (dp < 0)
       dp += 360;
-   Double_t ddp = -sphi();
+   Double_t ddp = -sphi() * TMath::RadToDeg();
    if (ddp < 0)
       ddp += 360;
    if (ddp > 360)
       ddp -= 360;
    if (ddp <= dp)
       xmax = rmax();
-   ddp = 90 - sphi();
+   ddp = 90 - sphi() * TMath::RadToDeg();
    if (ddp < 0)
       ddp += 360;
    if (ddp > 360)
       ddp -= 360;
    if (ddp <= dp)
       ymax = rmax();
-   ddp = 180 - sphi();
+   ddp = 180 - sphi() * TMath::RadToDeg();
    if (ddp < 0)
       ddp += 360;
    if (ddp > 360)
       ddp -= 360;
    if (ddp <= dp)
       xmin = -rmax();
-   ddp = 270 - sphi();
+   ddp = 270 - sphi() * TMath::RadToDeg();
    if (ddp < 0)
       ddp += 360;
    if (ddp > 360)
@@ -668,7 +668,7 @@ TGeoVGTubeSeg::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_
       voldiv->SetFinder(finder);
       finder->SetDivIndex(voldiv->GetNdaughters());
       for (id = 0; id < ndiv; id++) {
-         shape = new TGeoVGTubeSeg(start + id * step, start + (id + 1) * step, z(), sphi(), sphi() + Base_t::dphi());
+         shape = new TGeoVGTubeSeg(start + id * step, start + (id + 1) * step, z(), sphi() * TMath::RadToDeg(), (sphi() + Base_t::dphi()) * TMath::RadToDeg());
          vol = new TGeoVolume(divname, shape, voldiv->GetMedium());
          vmulti->AddVolume(vol);
          opt = "R";
@@ -677,13 +677,13 @@ TGeoVGTubeSeg::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_
       }
       return vmulti;
    case 2: //---                 Phi division
-      dphi = Base_t::dphi();
+      dphi = Base_t::dphi() * TMath::RadToDeg();
       if (dphi < 0)
          dphi += 360.;
       if (step <= 0) {
          step = dphi / ndiv;
-         start = sphi();
-         end = sphi() + Base_t::dphi();
+         start = sphi() * TMath::RadToDeg();
+         end = (sphi() + Base_t::dphi()) * TMath::RadToDeg();
       }
       finder = new TGeoPatternCylPhi(voldiv, ndiv, start, end);
       voldiv->SetFinder(finder);
@@ -702,7 +702,7 @@ TGeoVGTubeSeg::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_
       finder = new TGeoPatternZ(voldiv, ndiv, start, end);
       voldiv->SetFinder(finder);
       finder->SetDivIndex(voldiv->GetNdaughters());
-      shape = new TGeoVGTubeSeg(rmin(), rmax(), step / 2, sphi(), sphi() + Base_t::dphi());
+      shape = new TGeoVGTubeSeg(rmin(), rmax(), step / 2, sphi() * TMath::RadToDeg(), (sphi() + Base_t::dphi())* TMath::RadToDeg());
       vol = new TGeoVolume(divname, shape, voldiv->GetMedium());
       vmulti = gGeoManager->MakeVolumeMulti(divname, voldiv->GetMedium());
       vmulti->AddVolume(vol);
@@ -731,10 +731,10 @@ Double_t TGeoVGTubeSeg::GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) 
       dx = xhi - xlo;
       return dx;
    case 2:
-      xlo = sphi();
-      xhi = sphi() + dphi();
+      xlo = sphi() * TMath::RadToDeg();
+      xhi = (sphi() + dphi()) * TMath::RadToDeg();
       dx = xhi - xlo;
-      return dx;
+      return dx ;
    case 3:
       xlo = -z();
       xhi = z();
@@ -754,8 +754,8 @@ void TGeoVGTubeSeg::GetBoundingCylinder(Double_t *param) const
    param[0] *= param[0];
    param[1] = rmax();
    param[1] *= param[1];
-   param[2] = sphi();
-   param[3] = sphi() + dphi();
+   param[2] = sphi() * TMath::RadToDeg();
+   param[3] = (sphi() + dphi()) * TMath::RadToDeg();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -800,7 +800,7 @@ TGeoShape *TGeoVGTubeSeg::GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix * /*
       // }
    }
 
-   return (new TGeoVGTubeSeg(GetName(), rmin, rmax, dz, sphi(), sphi() + dphi()));
+   return (new TGeoVGTubeSeg(GetName(), rmin, rmax, dz, sphi() * TMath::RadToDeg(), (sphi() + dphi()) * TMath::RadToDeg()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -812,8 +812,8 @@ void TGeoVGTubeSeg::InspectShape() const
    printf("    Rmin = %11.5f\n", rmin());
    printf("    Rmax = %11.5f\n", rmax());
    printf("    dz   = %11.5f\n", z());
-   printf("    phi1 = %11.5f\n", sphi());
-   printf("    phi2 = %11.5f\n", sphi() + dphi());
+   printf("    phi1 = %11.5f\n", sphi()* TMath::RadToDeg());
+   printf("    phi2 = %11.5f\n", (sphi() + dphi()) * TMath::RadToDeg());
    printf(" Bounding box:\n");
    TGeoBBox::InspectShape();
 }
@@ -1060,11 +1060,27 @@ void TGeoVGTubeSeg::SavePrimitive(std::ostream &out, Option_t * /*option*/ /*= "
    out << "   rmin = " << rmin() << ";" << std::endl;
    out << "   rmax = " << rmax() << ";" << std::endl;
    out << "   dz   = " << z() << ";" << std::endl;
-   out << "   phi1 = " << sphi() << ";" << std::endl;
-   out << "   phi2 = " << sphi() + dphi() << ";" << std::endl;
+   out << "   phi1 = " << sphi() * TMath::RadToDeg() << ";" << std::endl;
+   out << "   phi2 = " << (sphi() + dphi()) * TMath::RadToDeg() << ";" << std::endl;
    out << "   TGeoShape *" << GetPointerName() << " = new TGeoVGTubeSeg(\"" << GetName() << "\",rmin,rmax,dz,phi1,phi2);"
        << std::endl;
    TObject::SetBit(TGeoShape::kGeoSavePrimitive);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Return phi1
+
+Double_t TGeoVGTubeSeg::GetPhi1() const
+{
+   return sphi() * TMath::RadToDeg();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Return phi2
+
+Double_t TGeoVGTubeSeg::GetPhi2() const
+{
+   return (sphi() + dphi()) * TMath::RadToDeg();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1079,12 +1095,12 @@ void TGeoVGTubeSeg::SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz,
    auto phi1 = phiStart;
    if (phi1 < 0)
       phi1 += 360.;
-   SetSPhi(phi1);
+   SetSPhi(phi1 * TMath::DegToRad());
    auto phi2 = phiEnd;
    while (phi2 <= phi1)
       phi2 += 360.;
-   SetDPhi(phi2 - phi1);
-   if (TGeoShape::IsSameWithinTolerance(sphi(), sphi() + dphi()))
+   SetDPhi((phi2 - phi1) * TMath::DegToRad());
+   if (TGeoShape::IsSameWithinTolerance(sphi()* TMath::RadToDeg(), (sphi() + dphi()) * TMath::RadToDeg()))
       Fatal("SetTubsDimensions", "In shape %s invalid phi1=%g, phi2=%g\n", GetName(), phi1, phi2);
    InitTrigonometry();
 }
@@ -1114,9 +1130,9 @@ Bool_t TGeoVGTubeSeg::GetPointsOnSegments(Int_t npoints, Double_t *array) const
       return kFALSE;
    }
    Int_t nc = (Int_t)TMath::Sqrt(0.5 * npoints);
-   Double_t dphi = (Base_t::dphi()) * TMath::DegToRad() / (nc - 1);
+   Double_t dphi = (Base_t::dphi()) / (nc - 1);
    Double_t phi = 0;
-   Double_t phi1 = sphi() * TMath::DegToRad();
+   Double_t phi1 = sphi();
    Int_t ntop = npoints / 2 - nc * (nc - 1);
    Double_t dz = 2 * z() / (nc - 1);
    Double_t z = 0;
@@ -1126,7 +1142,7 @@ Bool_t TGeoVGTubeSeg::GetPointsOnSegments(Int_t npoints, Double_t *array) const
    for (Int_t i = 0; i < nc; i++) {
       if (i == (nc - 1)) {
          nphi = ntop;
-         dphi = (Base_t::dphi()) * TMath::DegToRad() / (nphi - 1);
+         dphi = (Base_t::dphi()) / (nphi - 1);
       }
       z = -Base_t::z() + i * dz;
       // loop points on circle sections
@@ -1151,10 +1167,10 @@ void TGeoVGTubeSeg::SetPoints(Double_t *points) const
    Double_t dz;
    Int_t j, n;
    Double_t phi, phi1, phi2, dphi;
-   phi1 = sphi();
+   phi1 = sphi() ;
    phi2 = sphi() + Base_t::dphi();
    if (phi2 < phi1)
-      phi2 += 360.;
+      phi2 += TMath::TwoPi();
    n = gGeoManager->GetNsegments() + 1;
 
    dphi = (phi2 - phi1) / (n - 1);
@@ -1164,7 +1180,7 @@ void TGeoVGTubeSeg::SetPoints(Double_t *points) const
       Int_t indx = 0;
 
       for (j = 0; j < n; j++) {
-         phi = (phi1 + j * dphi) * TMath::DegToRad();
+         phi = (phi1 + j * dphi);
          points[indx + 6 * n] = points[indx] = rmin() * TMath::Cos(phi);
          indx++;
          points[indx + 6 * n] = points[indx] = rmin() * TMath::Sin(phi);
@@ -1174,7 +1190,7 @@ void TGeoVGTubeSeg::SetPoints(Double_t *points) const
          indx++;
       }
       for (j = 0; j < n; j++) {
-         phi = (phi1 + j * dphi) * TMath::DegToRad();
+         phi = (phi1 + j * dphi);
          points[indx + 6 * n] = points[indx] = rmax() * TMath::Cos(phi);
          indx++;
          points[indx + 6 * n] = points[indx] = rmax() * TMath::Sin(phi);
@@ -1197,7 +1213,7 @@ void TGeoVGTubeSeg::SetPoints(Float_t *points) const
    phi1 = sphi();
    phi2 = sphi() + Base_t::dphi();
    if (phi2 < phi1)
-      phi2 += 360.;
+      phi2 += TMath::TwoPi();
    n = gGeoManager->GetNsegments() + 1;
 
    dphi = (phi2 - phi1) / (n - 1);
@@ -1207,7 +1223,7 @@ void TGeoVGTubeSeg::SetPoints(Float_t *points) const
       Int_t indx = 0;
 
       for (j = 0; j < n; j++) {
-         phi = (phi1 + j * dphi) * TMath::DegToRad();
+         phi = (phi1 + j * dphi);
          points[indx + 6 * n] = points[indx] = rmin() * TMath::Cos(phi);
          indx++;
          points[indx + 6 * n] = points[indx] = rmin() * TMath::Sin(phi);
@@ -1217,7 +1233,7 @@ void TGeoVGTubeSeg::SetPoints(Float_t *points) const
          indx++;
       }
       for (j = 0; j < n; j++) {
-         phi = (phi1 + j * dphi) * TMath::DegToRad();
+         phi = (phi1 + j * dphi);
          points[indx + 6 * n] = points[indx] = rmax() * TMath::Cos(phi);
          indx++;
          points[indx + 6 * n] = points[indx] = rmax() * TMath::Sin(phi);
@@ -1268,8 +1284,8 @@ const TBuffer3D &TGeoVGTubeSeg::GetBuffer3D(Int_t reqSections, Bool_t localFrame
       buffer.fRadiusInner = rmin();
       buffer.fRadiusOuter = rmax();
       buffer.fHalfLength = z();
-      buffer.fPhiMin = sphi();
-      buffer.fPhiMax = sphi() + dphi();
+      buffer.fPhiMin = sphi() * TMath::RadToDeg();
+      buffer.fPhiMax = (sphi() + dphi()) * TMath::RadToDeg();
       buffer.SetSectionsValid(TBuffer3D::kShapeSpecific);
    }
    if (reqSections & TBuffer3D::kRawSizes) {
