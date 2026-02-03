@@ -28,11 +28,11 @@
 // ////////////////////////////////////////////////////////////////////////////////
 // /// Default constructor
 
-// TGeoVGTube::TGeoVGTube()
-//  : Base_t(0., 0., 0., 0., vecgeom::kTwoPi)
-// {
-//    SetShapeBit(TGeoShape::kGeoTube);
-// }
+TGeoVGTube::TGeoVGTube()
+ : Base_t("", 0., 0., 0., 0., vecgeom::kTwoPi)
+{
+   SetShapeBit(TGeoShape::kGeoTube);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying minimum and maximum radius

@@ -44,7 +44,7 @@ class TGeoVGTube : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {
   using Base_t = TGeoVGAdapter<vecgeom::GenericUnplacedTube>;
 public:
    // constructors
-   // TGeoVGTube();
+   TGeoVGTube();
    TGeoVGTube(Double_t rmin, Double_t rmax, Double_t dz);
    TGeoVGTube(const char *name, Double_t rmin, Double_t rmax, Double_t dz);
    TGeoVGTube(Double_t *params);

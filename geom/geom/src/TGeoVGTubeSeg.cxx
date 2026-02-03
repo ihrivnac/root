@@ -25,11 +25,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor
 
-// TGeoVGTubeSeg::TGeoVGTubeSeg()
-//    : TGeoTube(), sphi()(0.), fPhi2(0.), fS1(0.), fC1(0.), fS2(0.), fC2(0.), fSm(0.), fCm(0.), fCdfi(0.)
-// {
-//    SetShapeBit(TGeoShape::kGeoTubeSeg);
-// }
+TGeoVGTubeSeg::TGeoVGTubeSeg()
+   : Base_t("", 0., 0., 0., 0., 0.),
+     fS1(0.), fC1(0.), fS2(0.), fC2(0.), fSm(0.), fCm(0.), fCdfi(0.)
+{
+   SetShapeBit(TGeoShape::kGeoTubeSeg);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying minimum and maximum radius.

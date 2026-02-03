@@ -51,7 +51,7 @@ private:
 
 public:
    // constructors
-   // TGeoVGHype();
+   TGeoVGHype();
    TGeoVGHype(Double_t rin, Double_t stin, Double_t rout, Double_t stout, Double_t dz);
    TGeoVGHype(const char *name, Double_t rin, Double_t stin, Double_t rout, Double_t stout, Double_t dz);
    TGeoVGHype(Double_t *params);

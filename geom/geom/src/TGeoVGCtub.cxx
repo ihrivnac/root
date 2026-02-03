@@ -23,13 +23,18 @@
 
 // ClassImp(TGeoVGCtub);
 
-// TGeoVGCtub::TGeoVGCtub()
-// {
-//    // default ctor
-//    fNlow[0] = fNlow[1] = fNhigh[0] = fNhigh[1] = 0.;
-//    fNlow[2] = -1;
-//    fNhigh[2] = 1;
-// }
+////////////////////////////////////////////////////////////////////////////////
+/// Default constructor
+
+TGeoVGCtub::TGeoVGCtub()
+   : Base_t("", 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.)
+{
+   // default ctor
+   SetShapeBit(kGeoCtub);
+   fNlow[0] = fNlow[1] = fNhigh[0] = fNhigh[1] = 0.;
+   fNlow[2] = -1;
+   fNhigh[2] = 1;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// constructor

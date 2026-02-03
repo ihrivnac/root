@@ -43,7 +43,7 @@ class TGeoVGEltu : public TGeoVGAdapter<vecgeom::UnplacedEllipticalTube>
 
 public:
    // constructors
-   // TGeoVGEltu();
+   TGeoVGEltu();
    TGeoVGEltu(Double_t a, Double_t b, Double_t dz);
    TGeoVGEltu(const char *name, Double_t a, Double_t b, Double_t dz);
    TGeoVGEltu(Double_t *params);

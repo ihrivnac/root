@@ -57,7 +57,7 @@ protected:
 
 public:
    // constructors
-   // TGeoVGTubeSeg();
+   TGeoVGTubeSeg();
    TGeoVGTubeSeg(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
    TGeoVGTubeSeg(const char *name, Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
    TGeoVGTubeSeg(Double_t *params);

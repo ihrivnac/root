@@ -25,11 +25,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor
 
-// TGeoVGHype::TGeoVGHype()
-// :  Base_t(0., 0., 0., 0., 0.)
-// {
-//    SetShapeBit(TGeoShape::kGeoHype);
-// }
+TGeoVGHype::TGeoVGHype()
+:  Base_t("", 0., 0., 0., 0., 0.)
+{
+   SetShapeBit(TGeoShape::kGeoHype);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor specifying hyperboloid parameters.
