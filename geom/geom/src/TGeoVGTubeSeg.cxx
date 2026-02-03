@@ -75,14 +75,6 @@ TGeoVGTubeSeg::TGeoVGTubeSeg(Double_t *param)
 }
 
 // ////////////////////////////////////////////////////////////////////////////////
-// /// Function called after streaming an object of this class.
-
-// void TGeoVGTubeSeg::AfterStreamer()
-// {
-//    InitTrigonometry();
-// }
-
-// ////////////////////////////////////////////////////////////////////////////////
 // /// Init frequently used trigonometric values
 
 void TGeoVGTubeSeg::InitTrigonometry()
@@ -160,13 +152,6 @@ void TGeoVGTubeSeg::ComputeBBox()
    fDZ = z();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// Computes capacity of the shape in [length^3]
-
-// Double_t TGeoVGTubeSeg::Capacity() const
-// {
-//    return TGeoVGTubeSeg::Capacity(rmin(), rmax(), z(), sphi(), sphi() + dphi());
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: Computes capacity of the shape in [length^3]
@@ -176,37 +161,6 @@ Double_t TGeoVGTubeSeg::Capacity(Double_t rmin, Double_t rmax, Double_t dz, Doub
    Double_t capacity = TMath::Abs(phiEnd - phiStart) * TMath::DegToRad() * (rmax * rmax - rmin * rmin) * dz;
    return capacity;
 }
-
-// ////////////////////////////////////////////////////////////////////////////////
-// /// Compute normal to closest surface from POINT.
-
-// void TGeoVGTubeSeg::ComputeNormal(const Double_t *point, const Double_t *dir, Double_t *norm) const
-// {
-//    Double_t saf[3];
-//    Double_t rsq = point[0] * point[0] + point[1] * point[1];
-//    Double_t r = TMath::Sqrt(rsq);
-//    saf[0] = TMath::Abs(z() - TMath::Abs(point[2]));
-//    saf[1] = (rmin() > 1E-10) ? TMath::Abs(r - rmin()) : TGeoShape::Big();
-//    saf[2] = TMath::Abs(rmax() - r);
-//    Int_t i = TMath::LocMin(3, saf);
-//    if (((fPhi2 - sphi()) < 360.) && TGeoShape::IsCloseToPhi(saf[i], point, fC1, fS1, fC2, fS2)) {
-//       TGeoShape::NormalPhi(point, dir, norm, fC1, fS1, fC2, fS2);
-//       return;
-//    }
-//    if (i == 0) {
-//       norm[0] = norm[1] = 0.;
-//       norm[2] = TMath::Sign(1., dir[2]);
-//       return;
-//    };
-//    norm[2] = 0;
-//    Double_t phi = TMath::ATan2(point[1], point[0]);
-//    norm[0] = TMath::Cos(phi);
-//    norm[1] = TMath::Sin(phi);
-//    if (norm[0] * dir[0] + norm[1] * dir[1] < 0) {
-//       norm[0] = -norm[0];
-//       norm[1] = -norm[1];
-//    }
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: Compute normal to closest surface from POINT.
@@ -233,27 +187,6 @@ void TGeoVGTubeSeg::ComputeNormalS(const Double_t *point, const Double_t *dir, D
       norm[1] = -norm[1];
    }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// test if point is inside this tube segment
-/// first check if point is inside the tube
-
-// Bool_t TGeoVGTubeSeg::Contains(const Double_t *point) const
-// {
-//    if (!TGeoTube::Contains(point))
-//       return kFALSE;
-//    return IsInPhiRange(point, sphi(), fPhi2);
-// }
-
-////////////////////////////////////////////////////////////////////////////////
-/// compute closest distance from point px,py to each corner
-
-// Int_t TGeoVGTubeSeg::DistancetoPrimitive(Int_t px, Int_t py)
-// {
-//    Int_t n = gGeoManager->GetNsegments() + 1;
-//    const Int_t numPoints = 4 * n;
-//    return ShapeDistancetoPrimitive(numPoints, px, py);
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: Compute distance from inside point to surface of the tube segment (static)
@@ -314,27 +247,6 @@ Double_t TGeoVGTubeSeg::DistFromInsideS(const Double_t *point, const Double_t *d
       return stube;
    return sfmin;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// Compute distance from inside point to surface of the tube segment
-/// Boundary safe algorithm.
-
-// Double_t
-// TGeoVGTubeSeg::DistFromInside(const Double_t *point, const Double_t *dir, Int_t iact, Double_t step, Double_t *safe) const
-// {
-//    if (iact < 3 && safe) {
-//       *safe = SafetyS(point, kTRUE, rmin(), rmax(), z(), sphi(), fPhi2);
-//       if (iact == 0)
-//          return TGeoShape::Big();
-//       if ((iact == 1) && (*safe > step))
-//          return TGeoShape::Big();
-//    }
-//    if ((fPhi2 - sphi()) >= 360.)
-//       return TGeoTube::DistFromInsideS(point, dir, rmin(), rmax(), z());
-
-//    // compute distance to surface
-//    return TGeoVGTubeSeg::DistFromInsideS(point, dir, rmin(), rmax(), z(), fC1, fS1, fC2, fS2, fCm, fSm, fCdfi);
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: Static method to compute distance to arbitrary tube segment from outside point
@@ -618,31 +530,6 @@ Double_t TGeoVGTubeSeg::DistFromOutsideS(const Double_t *point, const Double_t *
    return snxt;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// compute distance from outside point to surface of the tube segment
-/// fist localize point w.r.t tube
-
-// Double_t TGeoVGTubeSeg::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact, Double_t step,
-//                                       Double_t *safe) const
-// {
-//    if (iact < 3 && safe) {
-//       *safe = SafetyS(point, kFALSE, rmin(), rmax(), z(), sphi(), fPhi2);
-//       if (iact == 0)
-//          return TGeoShape::Big();
-//       if ((iact == 1) && (step <= *safe))
-//          return TGeoShape::Big();
-//    }
-//    // Check if the bounding box is crossed within the requested distance
-//    Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
-//    if (sdist >= step)
-//       return TGeoShape::Big();
-//    if ((fPhi2 - sphi()) >= 360.)
-//       return TGeoTube::DistFromOutsideS(point, dir, rmin(), rmax(), z());
-
-//    // find distance to shape
-//    return TGeoVGTubeSeg::DistFromOutsideS(point, dir, rmin(), rmax(), z(), fC1, fS1, fC2, fS2, fCm, fSm, fCdfi);
-// }
-
 // ////////////////////////////////////////////////////////////////////////////////
 // /// Divide this tube segment shape belonging to volume "voldiv" into ndiv volumes
 // /// called divname, from start position with the given step. Returns pointer
@@ -923,56 +810,6 @@ void TGeoVGTubeSeg::SetSegsAndPols(TBuffer3D &buff) const
    buff.fPols[indx++] = 5 * n - 1;
    buff.fPols[indx++] = 7 * n - 1;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// computes the closest distance from given point InitTrigonometry();to this shape, according
-/// to option. The matching point on the shape is stored in spoint.
-
-// Double_t TGeoVGTubeSeg::Safety(const Double_t *point, Bool_t in) const
-// {
-//    Double_t saf[3];
-//    Double_t rsq = point[0] * point[0] + point[1] * point[1];
-//    Double_t r = TMath::Sqrt(rsq);
-//    if (in) {
-//       saf[0] = z() - TMath::Abs(point[2]);
-//       saf[1] = r - rmin();
-//       saf[2] = rmax() - r;
-//       Double_t safe = saf[TMath::LocMin(3, saf)];
-//       if ((fPhi2 - sphi()) >= 360.)
-//          return safe;
-//       Double_t safphi = TGeoShape::SafetyPhi(point, in, sphi(), fPhi2);
-//       return TMath::Min(safe, safphi);
-//    }
-//    // Point expected to be outside
-//    Bool_t inphi = kFALSE;
-//    Double_t cpsi = point[0] * fCm + point[1] * fSm;
-//    saf[0] = TMath::Abs(point[2]) - z();
-//    if (cpsi > r * fCdfi - TGeoShape::Tolerance())
-//       inphi = kTRUE;
-//    if (inphi) {
-//       saf[1] = rmin() - r;
-//       saf[2] = r - rmax();
-//       Double_t safe = saf[TMath::LocMax(3, saf)];
-//       safe = TMath::Max(0., safe);
-//       return safe;
-//    }
-//    // Point outside the phi range
-//    // Compute projected radius of the (r,phi) position vector onto
-//    // phi1 and phi2 edges and take the maximum for choosing the side.
-//    Double_t rproj = TMath::Max(point[0] * fC1 + point[1] * fS1, point[0] * fC2 + point[1] * fS2);
-//    saf[1] = rmin() - rproj;
-//    saf[2] = rproj - rmax();
-//    Double_t safe = TMath::Max(saf[1], saf[2]);
-//    if ((fPhi2 - sphi()) >= 360.)
-//       return TMath::Max(safe, saf[0]);
-//    if (safe > 0) {
-//       // rproj not within (rmin,rmax) - > no need to calculate safphi
-//       safe = TMath::Sqrt(rsq - rproj * rproj + safe * safe);
-//       return (saf[0] < 0) ? safe : TMath::Sqrt(safe * safe + saf[0] * saf[0]);
-//    }
-//    Double_t safphi = TGeoShape::SafetyPhi(point, in, sphi(), fPhi2);
-//    return (saf[0] < 0) ? safphi : TMath::Sqrt(saf[0] * saf[0] + safphi * safphi);
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: method to compute the closest distance from given point to this shape.

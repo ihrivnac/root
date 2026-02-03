@@ -95,33 +95,6 @@ Double_t TGeoVGTube::Capacity(Double_t rmin, Double_t rmax, Double_t dz)
    return capacity;
 }
 
-// ////////////////////////////////////////////////////////////////////////////////
-// /// Compute normal to closest surface from POINT.
-
-// void TGeoVGTube::ComputeNormal(const Double_t *point, const Double_t *dir, Double_t *norm) const
-// {
-//    Double_t saf[3];
-//    Double_t rsq = point[0] * point[0] + point[1] * point[1];
-//    Double_t r = TMath::Sqrt(rsq);
-//    saf[0] = TMath::Abs(z() - TMath::Abs(point[2]));
-//    saf[1] = (rmin() > 1E-10) ? TMath::Abs(r - rmin()) : TGeoShape::Big();
-//    saf[2] = TMath::Abs(rmax() - r);
-//    Int_t i = TMath::LocMin(3, saf);
-//    if (i == 0) {
-//       norm[0] = norm[1] = 0.;
-//       norm[2] = TMath::Sign(1., dir[2]);
-//       return;
-//    }
-//    norm[2] = 0;
-//    Double_t phi = TMath::ATan2(point[1], point[0]);
-//    norm[0] = TMath::Cos(phi);
-//    norm[1] = TMath::Sin(phi);
-//    if (norm[0] * dir[0] + norm[1] * dir[1] < 0) {
-//       norm[0] = -norm[0];
-//       norm[1] = -norm[1];
-//    }
-// }
-
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: Compute normal to closest surface from POINT.
 
@@ -137,31 +110,6 @@ void TGeoVGTube::ComputeNormalS(const Double_t *point, const Double_t *dir, Doub
       norm[1] = -norm[1];
    }
 }
-
-// ////////////////////////////////////////////////////////////////////////////////
-// /// test if point is inside this tube
-
-// Bool_t TGeoVGTube::Contains(const Double_t *point) const
-// {
-//    if (TMath::Abs(point[2]) > z())
-//       return kFALSE;
-//    Double_t r2 = point[0] * point[0] + point[1] * point[1];
-//    if ((r2 < rmin() * rmin()) || (r2 > rmax() * rmax()))
-//       return kFALSE;
-//    return kTRUE;
-// }
-
-////////////////////////////////////////////////////////////////////////////////
-/// compute closest distance from point px,py to each corner
-
-// Int_t TGeoVGTube::DistancetoPrimitive(Int_t px, Int_t py)
-// {
-//    Int_t n = gGeoManager->GetNsegments();
-//    Int_t numPoints = 4 * n;
-//    if (!HasRmin())
-//       numPoints = 2 * (n + 1);
-//    return ShapeDistancetoPrimitive(numPoints, px, py);
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: Compute distance from inside point to surface of the tube (static)
@@ -215,24 +163,6 @@ TGeoVGTube::DistFromInsideS(const Double_t *point, const Double_t *dir, Double_t
    }
    return 0.;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// Compute distance from inside point to surface of the tube
-/// Boundary safe algorithm.
-
-// Double_t
-// TGeoVGTube::DistFromInside(const Double_t *point, const Double_t *dir, Int_t iact, Double_t step, Double_t *safe) const
-// {
-//    if (iact < 3 && safe) {
-//       *safe = Safety(point, kTRUE);
-//       if (iact == 0)
-//          return TGeoShape::Big();
-//       if ((iact == 1) && (*safe > step))
-//          return TGeoShape::Big();
-//    }
-//    // compute distance to surface
-//    return DistFromInsideS(point, dir, rmin(), rmax(), z());
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static method to compute distance from outside point to a tube with given parameters
@@ -335,29 +265,6 @@ TGeoVGTube::DistFromOutsideS(const Double_t *point, const Double_t *dir, Double_
    }
    return TGeoShape::Big();
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// Compute distance from outside point to surface of the tube and safe distance
-/// Boundary safe algorithm.
-/// fist localize point w.r.t tube
-
-// Double_t
-// TGeoVGTube::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact, Double_t step, Double_t *safe) const
-// {
-//    if (iact < 3 && safe) {
-//       *safe = Safety(point, kFALSE);
-//       if (iact == 0)
-//          return TGeoShape::Big();
-//       if ((iact == 1) && (step <= *safe))
-//          return TGeoShape::Big();
-//    }
-//    // Check if the bounding box is crossed within the requested distance
-//    Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
-//    if (sdist >= step)
-//       return TGeoShape::Big();
-//    // find distance to shape
-//    return DistFromOutsideS(point, dir, rmin(), rmax(), z());
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static method computing the distance to a tube with given radius, starting from
@@ -730,52 +637,6 @@ void TGeoVGTube::SetSegsAndPols(TBuffer3D &buffer) const
       buffer.fPols[indx + 4] = 4 * n + (j + 1) % n;
    }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/// computes the closest distance from given point to this shape, according
-/// to option. The matching point on the shape is stored in spoint.
-
-// Double_t TGeoVGTube::Safety(const Double_t *point, Bool_t in) const
-// {
-// #ifndef NEVER
-//    Double_t r = TMath::Sqrt(point[0] * point[0] + point[1] * point[1]);
-//    Double_t safe, safrmin, safrmax;
-//    if (in) {
-//       safe = z() - TMath::Abs(point[2]); // positive if inside
-//       if (rmin() > 1E-10) {
-//          safrmin = r - rmin();
-//          if (safrmin < safe)
-//             safe = safrmin;
-//       }
-//       safrmax = rmax() - r;
-//       if (safrmax < safe)
-//          safe = safrmax;
-//    } else {
-//       safe = -z() + TMath::Abs(point[2]);
-//       if (rmin() > 1E-10) {
-//          safrmin = -r + rmin();
-//          if (safrmin > safe)
-//             safe = safrmin;
-//       }
-//       safrmax = -rmax() + r;
-//       if (safrmax > safe)
-//          safe = safrmax;
-//    }
-//    return safe;
-// #else
-//    Double_t saf[3];
-//    Double_t rsq = point[0] * point[0] + point[1] * point[1];
-//    Double_t r = TMath::Sqrt(rsq);
-//    saf[0] = z() - TMath::Abs(point[2]); // positive if inside
-//    saf[1] = (rmin() > 1E-10) ? (r - rmin()) : TGeoShape::Big();
-//    saf[2] = rmax() - r;
-//    if (in)
-//       return saf[TMath::LocMin(3, saf)];
-//    for (Int_t i = 0; i < 3; i++)
-//       saf[i] = -saf[i];
-//    return saf[TMath::LocMax(3, saf)];
-// #endif
-// }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Static: computes the closest distance from given point to this shape, according

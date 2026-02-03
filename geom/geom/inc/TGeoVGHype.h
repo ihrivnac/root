@@ -63,7 +63,6 @@ public:
 
    // Function derived TGeoShape/TGeoBBox not present in TGeoVGAdapter
    // (not relevant to navigation)
-   // Double_t Capacity() const override;
    void ComputeBBox() override;
    // Int_t DistToHype(const Double_t *point, const Double_t *dir, Double_t *s, Bool_t inner, Bool_t in) const;
 

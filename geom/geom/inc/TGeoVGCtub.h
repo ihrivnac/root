@@ -68,7 +68,6 @@ public:
    // Function derived TGeoShape/TGeoBBox not present in TGeoVGAdapter
    // (not relevant to navigation)
    // methods
-   // Double_t Capacity() const override;
    void ComputeBBox() override;
    TGeoVolume *
    Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndiv, Double_t start, Double_t step) override;
