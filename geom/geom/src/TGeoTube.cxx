@@ -129,12 +129,15 @@ shape:
 `Nlow=(Nx,Ny,Nz<0)`, `Nhigh=(Nx',Ny',Nz'>0)`.
 */
 
+#include "TGeoTube.h"
+
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #include <iostream>
 
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
 #include "TVirtualGeoPainter.h"
-#include "TGeoTube.h"
 #include "TBuffer3D.h"
 #include "TBuffer3DTypes.h"
 #include "TMath.h"
@@ -3460,3 +3463,5 @@ void TGeoCtub::Safety_v(const Double_t *points, const Bool_t *inside, Double_t *
    for (Int_t i = 0; i < vecsize; i++)
       safe[i] = Safety(&points[3 * i], inside[i]);
 }
+
+#endif

@@ -9,7 +9,10 @@
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
 
+#include "TGeoHype.h"
 #include "TGeoVGHype.h"
+
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
 
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
@@ -655,3 +658,5 @@ const TBuffer3D &TGeoVGHype::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 
    return buffer;
 }
+
+#endif // ROOT_USE_VECGEOM_SOLIDS

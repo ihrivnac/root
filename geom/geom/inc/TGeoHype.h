@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoHype
 #define ROOT_TGeoHype
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGHype.h"
+  using TGeoHype = TGeoVGHype;
+#else
+
 #include "TGeoTube.h"
 
 class TGeoHype : public TGeoTube {
@@ -91,5 +96,7 @@ public:
 
    ClassDefOverride(TGeoHype, 1) // hyperboloid class
 };
+
+#endif
 
 #endif

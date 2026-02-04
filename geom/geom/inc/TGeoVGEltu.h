@@ -20,6 +20,8 @@
 
 #include "TGeoVGAdapter.h"
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #ifdef __ROOTCLING__
 namespace vecgeom {
   // Providing a mock definition (Complete Type) for rootcling
@@ -81,5 +83,7 @@ public:
 
    // ClassDefOverride(TGeoVGEltu, 1) // elliptical tube class
 };
+
+#endif // ROOT_USE_VECGEOM_SOLIDS
 
 #endif

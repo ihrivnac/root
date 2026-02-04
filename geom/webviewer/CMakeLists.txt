@@ -20,6 +20,9 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTGeomViewer
     src/RGeomHierarchy.cxx
     src/RGeomViewer.cxx
     src/RGeoPainter.cxx
+  LIBRARIES
+    ${VECGEOM_LIBRARIES}
+    ${CMAKE_DL_LIBS}
   DEPENDENCIES
     Core
     Geom

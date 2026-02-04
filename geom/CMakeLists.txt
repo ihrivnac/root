@@ -20,9 +20,9 @@ if(gdml)
   endif()
 endif()
 
-if(vecgeom)
-  add_subdirectory(vecgeom)
-endif()
+#if(vecgeom)
+#  add_subdirectory(vecgeom)
+#endif()
 
 if(webgui)
   add_subdirectory(webviewer)

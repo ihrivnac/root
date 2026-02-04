@@ -12,6 +12,13 @@
 #ifndef ROOT_TGeoTube
 #define ROOT_TGeoTube
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGTube.h"
+  using TGeoTube = TGeoVGTube;
+  using TGeoTubeSeg = TGeoVGTubeSeg;
+  using TGeoCtub = TGeoVGCtub;
+#else
+
 #include "TGeoBBox.h"
 
 class TGeoTube : public TGeoBBox {
@@ -225,5 +232,7 @@ public:
 
    ClassDefOverride(TGeoCtub, 1) // cut tube segment class
 };
+
+#endif
 
 #endif

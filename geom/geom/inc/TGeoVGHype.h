@@ -20,6 +20,8 @@
 
 #include "TGeoVGAdapter.h"
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #ifdef __ROOTCLING__
 namespace vecgeom {
   // Providing a mock definition (Complete Type) for rootcling
@@ -102,5 +104,7 @@ public:
 
    // ClassDefOverride(TGeoVGHype, 1) // hyperboloid class
 };
+
+#endif // ROOT_USE_VECGEOM_SOLIDS
 
 #endif

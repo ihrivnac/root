@@ -10,7 +10,10 @@
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
 
-#include "TGeoVGCtub.h"
+#include "TGeoTube.h"
+#include "TGeoVGTube.h"
+
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
 
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
@@ -75,7 +78,8 @@ TGeoVGCtub::TGeoVGCtub(const char *name, Double_t rmin, Double_t rmax, Double_t 
 ////////////////////////////////////////////////////////////////////////////////
 /// ctor with parameters
 
-TGeoVGCtub::TGeoVGCtub(Double_t *params) : TGeoTubeSeg(0, 0, 0, 0, 0)
+TGeoVGCtub::TGeoVGCtub(Double_t *params)
+  : Base_t("", 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.)
 {
    SetCtubDimensions(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8],
                      params[9], params[10]);
@@ -87,19 +91,10 @@ TGeoVGCtub::TGeoVGCtub(Double_t *params) : TGeoTubeSeg(0, 0, 0, 0, 0)
 
 TGeoVGCtub::~TGeoVGCtub() {}
 
-////////////////////////////////////////////////////////////////////////////////
-/// Computes capacity of the shape in [length^3]
-
-Double_t TGeoVGCtub::Capacity() const
-{
-   Double_t capacity = TGeoTubeSeg::Capacity();
-   return capacity;
-}
-
 // ////////////////////////////////////////////////////////////////////////////////
 // /// Init frequently used trigonometric values
 
-void TGeoVGTubeSeg::InitTrigonometry()
+void TGeoVGCtub::InitTrigonometry()
 {
    Double_t phi1 = sphi();
    Double_t phi2 = (sphi() + dphi());
@@ -115,11 +110,73 @@ void TGeoVGTubeSeg::InitTrigonometry()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/// compute bounding box of the tube segment
+/// (copied) from TGeoVGTubeSeg::ComputeBBox()
+
+void TGeoVGCtub::ComputeTubeSegBBox()
+{
+   Double_t xc[4];
+   Double_t yc[4];
+   xc[0] = rmax() * fC1;
+   yc[0] = rmax() * fS1;
+   xc[1] = rmax() * fC2;
+   yc[1] = rmax() * fS2;
+   xc[2] = rmin() * fC1;
+   yc[2] = rmin() * fS1;
+   xc[3] = rmin() * fC2;
+   yc[3] = rmin() * fS2;
+
+   Double_t xmin = xc[TMath::LocMin(4, &xc[0])];
+   Double_t xmax = xc[TMath::LocMax(4, &xc[0])];
+   Double_t ymin = yc[TMath::LocMin(4, &yc[0])];
+   Double_t ymax = yc[TMath::LocMax(4, &yc[0])];
+
+   Double_t dp = dphi() * TMath::RadToDeg();
+   if (dp < 0)
+      dp += 360;
+   Double_t ddp = -sphi() * TMath::RadToDeg();
+   if (ddp < 0)
+      ddp += 360;
+   if (ddp > 360)
+      ddp -= 360;
+   if (ddp <= dp)
+      xmax = rmax();
+   ddp = 90 - sphi() * TMath::RadToDeg();
+   if (ddp < 0)
+      ddp += 360;
+   if (ddp > 360)
+      ddp -= 360;
+   if (ddp <= dp)
+      ymax = rmax();
+   ddp = 180 - sphi() * TMath::RadToDeg();
+   if (ddp < 0)
+      ddp += 360;
+   if (ddp > 360)
+      ddp -= 360;
+   if (ddp <= dp)
+      xmin = -rmax();
+   ddp = 270 - sphi() * TMath::RadToDeg();
+   if (ddp < 0)
+      ddp += 360;
+   if (ddp > 360)
+      ddp -= 360;
+   if (ddp <= dp)
+      ymin = -rmax();
+   fOrigin[0] = (xmax + xmin) / 2;
+   fOrigin[1] = (ymax + ymin) / 2;
+   fOrigin[2] = 0;
+   fDX = (xmax - xmin) / 2;
+   fDY = (ymax - ymin) / 2;
+   fDZ = z();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 /// compute minimum bounding box of the ctub
 
 void TGeoVGCtub::ComputeBBox()
 {
-   TGeoTubeSeg::ComputeBBox();
+   ComputeTubeSegBBox();
+
    if ((fNlow[2] > -(1E-10)) || (fNhigh[2] < 1E-10)) {
       Error("ComputeBBox", "In shape %s wrong definition of cut planes", GetName());
       return;
@@ -138,19 +195,19 @@ void TGeoVGCtub::ComputeBBox()
    for (i = 0; i < 2; i++) {
       if (phi_low < 0)
          phi_low += 360.;
-      Double_t dphi = fPhi2 - fPhi1;
+      Double_t dphi = Base_t::dphi() * TMath::RadToDeg();
       if (dphi < 0)
          dphi += 360.;
-      Double_t ddp = phi_low - fPhi1;
+      Double_t ddp = phi_low - sphi() * TMath::RadToDeg();
       if (ddp < 0)
          ddp += 360.;
       if (ddp <= dphi) {
          xc = rmin() * TMath::Cos(phi_low * TMath::DegToRad());
          yc = rmin() * TMath::Sin(phi_low * TMath::DegToRad());
-         z1 = GetZcoord(xc, yc, -z());
+         z1 = GetZcoord(xc, yc, -Base_t::z());
          xc = rmax() * TMath::Cos(phi_low * TMath::DegToRad());
          yc = rmax() * TMath::Sin(phi_low * TMath::DegToRad());
-         z1 = TMath::Min(z1, GetZcoord(xc, yc, -z()));
+         z1 = TMath::Min(z1, GetZcoord(xc, yc, -Base_t::z()));
          if (in_range_low)
             zmin = TMath::Min(zmin, z1);
          else
@@ -165,19 +222,19 @@ void TGeoVGCtub::ComputeBBox()
    for (i = 0; i < 2; i++) {
       if (phi_hi < 0)
          phi_hi += 360.;
-      Double_t dphi = fPhi2 - fPhi1;
+      Double_t dphi = Base_t::dphi() * TMath::RadToDeg();;
       if (dphi < 0)
          dphi += 360.;
-      Double_t ddp = phi_hi - fPhi1;
+      Double_t ddp = phi_hi - sphi() * TMath::RadToDeg();
       if (ddp < 0)
          ddp += 360.;
       if (ddp <= dphi) {
          xc = rmin() * TMath::Cos(phi_hi * TMath::DegToRad());
          yc = rmin() * TMath::Sin(phi_hi * TMath::DegToRad());
-         z1 = GetZcoord(xc, yc, z());
+         z1 = GetZcoord(xc, yc, Base_t::z());
          xc = rmax() * TMath::Cos(phi_hi * TMath::DegToRad());
          yc = rmax() * TMath::Sin(phi_hi * TMath::DegToRad());
-         z1 = TMath::Max(z1, GetZcoord(xc, yc, z()));
+         z1 = TMath::Max(z1, GetZcoord(xc, yc, Base_t::z()));
          if (in_range_hi)
             zmax = TMath::Max(zmax, z1);
          else
@@ -191,23 +248,23 @@ void TGeoVGCtub::ComputeBBox()
 
    xc = rmin() * fC1;
    yc = rmin() * fS1;
-   z[0] = GetZcoord(xc, yc, -z());
-   z[4] = GetZcoord(xc, yc, z());
+   z[0] = GetZcoord(xc, yc, -Base_t::z());
+   z[4] = GetZcoord(xc, yc, Base_t::z());
 
    xc = rmin() * fC2;
    yc = rmin() * fS2;
-   z[1] = GetZcoord(xc, yc, -z());
-   z[5] = GetZcoord(xc, yc, z());
+   z[1] = GetZcoord(xc, yc, -Base_t::z());
+   z[5] = GetZcoord(xc, yc, Base_t::z());
 
    xc = rmax() * fC1;
    yc = rmax() * fS1;
-   z[2] = GetZcoord(xc, yc, -z());
-   z[6] = GetZcoord(xc, yc, z());
+   z[2] = GetZcoord(xc, yc, -Base_t::z());
+   z[6] = GetZcoord(xc, yc, Base_t::z());
 
    xc = rmax() * fC2;
    yc = rmax() * fS2;
-   z[3] = GetZcoord(xc, yc, -z());
-   z[7] = GetZcoord(xc, yc, z());
+   z[3] = GetZcoord(xc, yc, -Base_t::z());
+   z[7] = GetZcoord(xc, yc, Base_t::z());
 
    z1 = z[TMath::LocMin(4, &z[0])];
    if (in_range_low)
@@ -241,8 +298,8 @@ Double_t TGeoVGCtub::GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) con
       dx = xhi - xlo;
       return dx;
    case 2:
-      xlo = fPhi1;
-      xhi = fPhi2;
+      xlo = sphi() * TMath::RadToDeg();
+      xhi = (sphi() + dphi()) * TMath::RadToDeg();
       dx = xhi - xlo;
       return dx;
    }
@@ -290,13 +347,13 @@ TGeoShape *TGeoVGCtub::GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix * /*mat
    rmax = Base_t::rmax();
    dz = z();
    if (z() < 0)
-      dz = ((TGeoTVGCtub *)mother)->GetDz();
-   if (rmin() < 0)
+      dz = ((TGeoVGCtub *)mother)->GetDz();
+   if (Base_t::rmin() < 0)
       rmin = ((TGeoVGCtub *)mother)->GetRmin();
-   if ((rmax() < 0) || (rmax() <= rmin()))
+   if ((Base_t::rmax() < 0) || (Base_t::rmax() <= Base_t::rmin()))
       rmax = ((TGeoVGCtub *)mother)->GetRmax();
 
-   return (new TGeoVGCtub(rmin, rmax, dz, fPhi1, fPhi2, fNlow[0], fNlow[1], fNlow[2], fNhigh[0], fNhigh[1], fNhigh[2]));
+   return (new TGeoVGCtub(rmin, rmax, dz, sphi() * TMath::RadToDeg(), (sphi() + dphi()) * TMath::RadToDeg(), fNlow[0], fNlow[1], fNlow[2], fNhigh[0], fNhigh[1], fNhigh[2]));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -364,7 +421,7 @@ Double_t TGeoVGCtub::GetPhi2() const
 /// Set dimensions of the tube segment.
 /// The segment will be from phiStart to phiEnd expressed in degree.
 
-void TGeoVGTubeSeg::SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phiStart, Double_t phiEnd)
+void TGeoVGCtub::SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phiStart, Double_t phiEnd)
 {
    SetRMin(rmin);
    SetRMin(rmax);
@@ -427,8 +484,8 @@ void TGeoVGCtub::SetPoints(Double_t *points) const
    Double_t dz;
    Int_t j, n;
    Double_t phi, phi1, phi2, dphi;
-   phi1 = fPhi1;
-   phi2 = fPhi2;
+   phi1 = sphi() * TMath::RadToDeg();
+   phi2 = (sphi() + Base_t::dphi()) * TMath::RadToDeg();
    if (phi2 < phi1)
       phi2 += 360.;
    n = gGeoManager->GetNsegments() + 1;
@@ -470,8 +527,8 @@ void TGeoVGCtub::SetPoints(Float_t *points) const
    Double_t dz;
    Int_t j, n;
    Double_t phi, phi1, phi2, dphi;
-   phi1 = fPhi1;
-   phi2 = fPhi2;
+   phi1 = sphi() * TMath::RadToDeg();
+   phi2 = (sphi() + Base_t::dphi()) * TMath::RadToDeg();
    if (phi2 < phi1)
       phi2 += 360.;
    n = gGeoManager->GetNsegments() + 1;
@@ -541,8 +598,8 @@ const TBuffer3D &TGeoVGCtub::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
       buffer.fRadiusInner = rmin();
       buffer.fRadiusOuter = rmax();
       buffer.fHalfLength = z();
-      buffer.fPhiMin = fPhi1;
-      buffer.fPhiMax = fPhi2;
+      buffer.fPhiMin = sphi() * TMath::RadToDeg();
+      buffer.fPhiMax = (sphi() + dphi()) * TMath::RadToDeg();
 
       for (UInt_t i = 0; i < 3; i++) {
          buffer.fLowPlaneNorm[i] = fNlow[i];
@@ -570,3 +627,5 @@ const TBuffer3D &TGeoVGCtub::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 
    return buffer;
 }
+
+#endif // ROOT_USE_VECGEOM_SOLIDS

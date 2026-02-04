@@ -9,7 +9,10 @@
  *************************************************************************/
 
 
+#include "TGeoTube.h"
 #include "TGeoVGTube.h"
+
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
 
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
@@ -959,3 +962,5 @@ const TBuffer3D &TGeoVGTube::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 }
 
 template class TGeoVGAdapter<vecgeom::cxx::SUnplacedTube<vecgeom::cxx::TubeTypes::UniversalTube>>;
+
+#endif // ROOT_USE_VECGEOM_SOLIDS

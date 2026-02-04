@@ -8,7 +8,10 @@
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
 
-#include "TGeoVGTubeSeg.h"
+#include "TGeoTube.h"
+#include "TGeoVGTube.h"
+
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
 
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
@@ -662,31 +665,12 @@ TGeoShape *TGeoVGTubeSeg::GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix * /*
    rmin = Base_t::rmin();
    rmax = Base_t::rmax();
    dz = z();
-   if (z() < 0) {
-      // TODO: use typeinfo 
-      if (dynamic_cast<TGeoTube*>(mother)) {
-        dz = ((TGeoTube *)mother)->GetDz();
-      }
-      // if (dynamic_cast<TGeoVGTube*>(mother)) {
-      //   dz = ((TGeoVGTube *)mother)->GetDz();
-      // }
-   }
-   if (Base_t::rmin() < 0) {
-      if (dynamic_cast<TGeoTube*>(mother)) {
-        rmin = ((TGeoTube *)mother)->GetRmin();
-      }
-      // if (dynamic_cast<TGeoVGTube*>(mother)) {
-      //   rmin = ((TGeoVGTube *)mother)->GetRmin();
-      // }
-   }
-   if ((Base_t::rmax() < 0) || (Base_t::rmax() <= Base_t::rmin())) {
-      if (dynamic_cast<TGeoTube*>(mother)) {
-        rmax = ((TGeoTube *)mother)->GetRmax();
-      }
-      // if (dynamic_cast<TGeoVGTube*>(mother)) {
-      //   rmax = ((TGeoVGTube *)mother)->GetRmax();
-      // }
-   }
+   if (z() < 0)
+      dz = ((TGeoVGTubeSeg *)mother)->GetDz();
+   if (Base_t::rmin() < 0)
+      rmin = ((TGeoVGTubeSeg *)mother)->GetRmin();
+   if ((Base_t::rmax() < 0) || (Base_t::rmax() <= Base_t::rmin()))
+      rmax = ((TGeoVGTubeSeg *)mother)->GetRmax();
 
    return (new TGeoVGTubeSeg(GetName(), rmin, rmax, dz, sphi() * TMath::RadToDeg(), (sphi() + dphi()) * TMath::RadToDeg()));
 }
@@ -921,6 +905,7 @@ Double_t TGeoVGTubeSeg::GetPhi2() const
    return (sphi() + dphi()) * TMath::RadToDeg();
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Set dimensions of the tube segment.
 /// The segment will be from phiStart to phiEnd expressed in degree.
@@ -1148,3 +1133,5 @@ const TBuffer3D &TGeoVGTubeSeg::GetBuffer3D(Int_t reqSections, Bool_t localFrame
 }
 
 template class TGeoVGAdapter<vecgeom::cxx::SUnplacedTube<vecgeom::cxx::TubeTypes::UniversalTube>>;
+
+#endif // ROOT_USE_VECGEOM_SOLIDS

@@ -68,7 +68,6 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoVGAdapter.h
     TGeoVGAdapter.icc
     TGeoVGTube.h
-    TGeoVGTubeSeg.h
     TGeoVGEltu.h
     TGeoVGHype.h
   SOURCES
@@ -125,6 +124,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TVirtualMagField.cxx
     src/TGeoVGTube.cxx
     src/TGeoVGTubeSeg.cxx
+    src/TGeoVGCtub.cxx
     src/TGeoVGEltu.cxx
     src/TGeoVGHype.cxx
   LIBRARIES

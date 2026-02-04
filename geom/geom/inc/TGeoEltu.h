@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoEltu
 #define ROOT_TGeoEltu
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGEltu.h"
+  using TGeoEltu = TGeoVGEltu;
+#else
+
 #include "TGeoTube.h"
 
 class TGeoEltu : public TGeoTube {
@@ -64,5 +69,7 @@ public:
 
    ClassDefOverride(TGeoEltu, 1) // elliptical tube class
 };
+
+#endif
 
 #endif

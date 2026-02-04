@@ -20,6 +20,8 @@
 
 #include "TGeoVGAdapter.h"
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #ifdef __ROOTCLING__
 namespace vecgeom {
   // Providing a mock definition (Complete Type) for rootcling
@@ -83,10 +85,10 @@ public:
    Int_t GetNmeshVertices() const override;
    const TBuffer3D &GetBuffer3D(Int_t reqSections, Bool_t localFrame) const override;
 
-   inline Double_t GetRmin() const { return rmin(); }
-   inline Double_t GetRmax() const { return rmax(); }
-   inline Double_t GetDz() const { return z(); }
-   inline Bool_t HasRmin() const { return (rmin() > 0) ? kTRUE : kFALSE; }
+   inline Double_t GetRmin() const { return Base_t::rmin();}
+   inline Double_t GetRmax() const { return Base_t::rmax();}
+   inline Double_t GetDz() const { return Base_t::z();}
+   Bool_t HasRmin() const { return (Base_t::rmin() > 0) ? kTRUE : kFALSE; }
    void SetTubeDimensions(Double_t rmin, Double_t rmax, Double_t dz);
    void SetDimensions(Double_t *param) override;
    void SetPoints(Double_t *points) const override;
@@ -96,5 +98,162 @@ public:
 
    // ClassDefOverride(TGeoVGTube, 1) // cylindrical l tube class
 };
+
+// TGeoVGTubeSeg
+//
+// Class description:
+//
+// Wrapper class for TGeoTubeSeg to make use of VecGeom Tube.
+
+class TGeoVGTubeSeg : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {
+                            // in GenericUnplacedTube is used in G$
+  using Shape_t = vecgeom::GenericUnplacedTube;
+  using Base_t = TGeoVGAdapter<vecgeom::GenericUnplacedTube>;
+
+protected:
+   // data members
+   // Transient trigonometric data (use to compute BBox)
+   Double_t fS1;   // sin(phi1)
+   Double_t fC1;   // cos(phi1)
+   Double_t fS2;   // sin(phi2)
+   Double_t fC2;   // cos(phi2)
+   Double_t fSm;   // sin(0.5*(phi1+phi2))
+   Double_t fCm;   // cos(0.5*(phi1+phi2))
+   Double_t fCdfi; // cos(0.5*(phi1-phi2))
+
+   void InitTrigonometry();
+
+public:
+   // constructors
+   TGeoVGTubeSeg();
+   TGeoVGTubeSeg(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
+   TGeoVGTubeSeg(const char *name, Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
+   TGeoVGTubeSeg(Double_t *params);
+
+   // destructor
+   ~TGeoVGTubeSeg() {}
+
+   // static methods
+   static Double_t Capacity(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
+   static void ComputeNormalS(const Double_t *point, const Double_t *dir, Double_t *norm, Double_t rmin, Double_t rmax,
+                              Double_t dz, Double_t c1, Double_t s1, Double_t c2, Double_t s2);
+   static Double_t DistFromInsideS(const Double_t *point, const Double_t *dir, Double_t rmin, Double_t rmax,
+                                   Double_t dz, Double_t c1, Double_t s1, Double_t c2, Double_t s2, Double_t cm,
+                                   Double_t sm, Double_t cdfi);
+   static Double_t DistFromOutsideS(const Double_t *point, const Double_t *dir, Double_t rmin, Double_t rmax,
+                                    Double_t dz, Double_t c1, Double_t s1, Double_t c2, Double_t s2, Double_t cm,
+                                    Double_t sm, Double_t cdfi);
+   static Double_t SafetyS(const Double_t *point, Bool_t in, Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1,
+                           Double_t phi2, Int_t skipz = 0);
+
+   // Function derived TGeoShape/TGeoBBox not present in TGeoVGAdapter
+   // (not relevant to navigation)
+   void ComputeBBox() override;
+   TGeoVolume *
+   Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndiv, Double_t start, Double_t step) override;
+   Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const override;
+   void GetBoundingCylinder(Double_t *param) const override;
+   const TBuffer3D &GetBuffer3D(Int_t reqSections, Bool_t localFrame) const override;
+   Int_t GetByteCount() const override { return 56; }
+   Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override;
+   TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const override;
+   Int_t GetNmeshVertices() const override;
+   void GetMeshNumbers(Int_t &nvert, Int_t &nsegs, Int_t &npols) const override;
+   void InspectShape() const override;
+   TBuffer3D *MakeBuffer3D() const override;
+   void SavePrimitive(std::ostream &out, Option_t *option = "") override;
+
+   inline Double_t GetRmin() const { return Base_t::rmin();}
+   inline Double_t GetRmax() const { return Base_t::rmax();}
+   inline Double_t GetDz() const { return Base_t::z();}
+   Double_t GetPhi1() const;
+   Double_t GetPhi2() const;
+   void SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
+   void SetDimensions(Double_t *param) override;
+   void SetPoints(Double_t *points) const override;
+   void SetPoints(Float_t *points) const override;
+   void SetSegsAndPols(TBuffer3D &buff) const override;
+   void Sizeof3D() const override;
+
+   // ClassDefOverride(TGeoVGTubeSeg, 2) // cylindrical tube segment class
+};
+
+// TGeoVGCtub
+//
+// Class description:
+//
+// Wrapper class for TGeoCtub to make use of VecGeom CutTube.
+
+#include <VecGeom/volumes/UnplacedCutTube.h>
+
+class TGeoVGCtub : public TGeoVGAdapter<vecgeom::UnplacedCutTube> {
+
+  using Shape_t = vecgeom::UnplacedCutTube;
+  using Base_t = TGeoVGAdapter<vecgeom::UnplacedCutTube>;
+
+protected:
+   // data members
+   // Transient trigonometric data (use to compute BBox)
+   Double_t fS1;   // sin(phi1)
+   Double_t fC1;   // cos(phi1)
+   Double_t fS2;   // sin(phi2)
+   Double_t fC2;   // cos(phi2)
+   Double_t fSm;   // sin(0.5*(phi1+phi2))
+   Double_t fCm;   // cos(0.5*(phi1+phi2))
+   Double_t fCdfi; // cos(0.5*(phi1-phi2))
+   // Arrays for normals
+   Double_t fNlow[3];  // normal to lower cut plane
+   Double_t fNhigh[3]; // normal to higher cut plane
+
+   void InitTrigonometry();  // from TGeoTubeSeg
+   void ComputeTubeSegBBox();// from TGeoTubeSeg
+
+public:
+   // constructors
+   TGeoVGCtub();
+   TGeoVGCtub(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2, Double_t lx, Double_t ly,
+            Double_t lz, Double_t tx, Double_t ty, Double_t tz);
+   TGeoVGCtub(const char *name, Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2, Double_t lx,
+            Double_t ly, Double_t lz, Double_t tx, Double_t ty, Double_t tz);
+   TGeoVGCtub(Double_t *params);
+   // destructor
+   ~TGeoVGCtub() override;
+
+   // Function derived TGeoShape/TGeoBBox not present in TGeoVGAdapter
+   // (not relevant to navigation)
+   // methods
+   void ComputeBBox() override;
+   TGeoVolume *
+   Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndiv, Double_t start, Double_t step) override;
+   Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const override;
+   const TBuffer3D &GetBuffer3D(Int_t reqSections, Bool_t localFrame) const override;
+   Int_t GetByteCount() const override { return 98; }
+   Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override;
+   TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const override;
+   void GetMeshNumbers(Int_t &nvert, Int_t &nsegs, Int_t &npols) const override;
+   Int_t GetNmeshVertices() const override;
+   void InspectShape() const override;
+   void SavePrimitive(std::ostream &out, Option_t *option = "") override;
+
+   inline Double_t GetRmin() const { return Base_t::rmin();}
+   inline Double_t GetRmax() const { return Base_t::rmax();}
+   inline Double_t GetDz() const { return Base_t::z();}
+   Double_t GetPhi1() const;
+   Double_t GetPhi2() const;
+   const Double_t *GetNlow() const { return &fNlow[0]; }
+   const Double_t *GetNhigh() const { return &fNhigh[0]; }
+   Double_t GetZcoord(Double_t xc, Double_t yc, Double_t zc) const;
+
+   void SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2);
+   void SetCtubDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phi1, Double_t phi2, Double_t lx,
+                          Double_t ly, Double_t lz, Double_t tx, Double_t ty, Double_t tz);
+   void SetDimensions(Double_t *param) override;
+   void SetPoints(Double_t *points) const override;
+   void SetPoints(Float_t *points) const override;
+
+   // ClassDefOverride(TGeoVGCtub, 1) // cut tube segment class
+};
+
+#endif // ROOT_USE_VECGEOM_SOLIDS
 
 #endif

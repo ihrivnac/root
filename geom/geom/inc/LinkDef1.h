@@ -100,16 +100,13 @@
 #pragma link C++ class TGeoNavigator + ;
 #pragma link C++ class TGeoNavigatorArray;
 #pragma link C++ class TGDMLMatrix + ;
-#pragma link C++ namespace vecgeom;
-#pragma link C++ class TGeoVGAdapter<vecgeom::GenericUnplacedTube>+;
-#pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedCutTube>+;
-#pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedEllipticalTube>+;
-#pragma link C++ class TGeoVGAdapter<vecgeom::GenericUnplacedHype>+;
-#pragma link C++ class TGeoVGTube+;
-#pragma link C++ class TGeoVGTubeSeg+;
-#pragma link C++ class TGeoVGCtub+;
-#pragma link C++ class TGeoVGTEltu+;
-#pragma link C++ class TGeoVGHype+;
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #pragma link C++ namespace vecgeom;
+  #pragma link C++ class TGeoVGAdapter<vecgeom::GenericUnplacedTube>+;
+  #pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedCutTube>+;
+  #pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedEllipticalTube>+;
+  #pragma link C++ class TGeoVGAdapter<vecgeom::GenericUnplacedHype>+;
+#endif
 #pragma link C++ struct std::map < std::thread::id, TGeoNavigatorArray * > ;
 #pragma link C++ struct std::pair < std::thread::id, TGeoNavigatorArray * > ;
 #pragma link C++ struct std::map < std::thread::id, Int_t > ;
