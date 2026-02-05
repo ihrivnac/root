@@ -55,9 +55,9 @@ TGeoVGTubeSeg::TGeoVGTubeSeg(const char *name, Double_t rmin, Double_t rmax, Dou
                          Double_t phiEnd)
    : Base_t(name, rmin, rmax, dz, phiStart * TMath::DegToRad(), (phiEnd - phiStart) * TMath::DegToRad())
 {
+   SetName(name);
    SetShapeBit(TGeoShape::kGeoTubeSeg);
    SetTubsDimensions(rmin, rmax, dz, phiStart, phiEnd);
-   SetName(name);
    ComputeBBox();
 }
 
@@ -913,7 +913,7 @@ Double_t TGeoVGTubeSeg::GetPhi2() const
 void TGeoVGTubeSeg::SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phiStart, Double_t phiEnd)
 {
    SetRMin(rmin);
-   SetRMin(rmax);
+   SetRMax(rmax);
    SetDz(dz);
    auto phi1 = phiStart;
    if (phi1 < 0)

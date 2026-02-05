@@ -2596,6 +2596,9 @@ ClassImp(TGeoCtub);
 
 TGeoCtub::TGeoCtub()
 {
+   // Missing in ROOT
+   // SetShapeBit(kGeoCtub);
+
    // default ctor
    fNlow[0] = fNlow[1] = fNhigh[0] = fNhigh[1] = 0.;
    fNlow[2] = -1;

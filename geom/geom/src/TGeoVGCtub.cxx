@@ -64,14 +64,15 @@ TGeoVGCtub::TGeoVGCtub(const char *name, Double_t rmin, Double_t rmax, Double_t 
                    Double_t lx, Double_t ly, Double_t lz, Double_t tx, Double_t ty, Double_t tz)
    : Base_t(name, rmin, rmax, dz, phi1 * TMath::DegToRad(), (phi2 - phi1) * TMath::DegToRad(), lx, ly, lz, tx, ty, tz)
 {
+   SetName(name);
    fNlow[0] = lx;
    fNlow[1] = ly;
    fNlow[2] = lz;
    fNhigh[0] = tx;
    fNhigh[1] = ty;
    fNhigh[2] = tz;
-   SetTubsDimensions(rmin, rmax, dz, phi1, phi2);
    SetShapeBit(kGeoCtub);
+   SetTubsDimensions(rmin, rmax, dz, phi1, phi2);
    ComputeBBox();
 }
 
@@ -81,9 +82,9 @@ TGeoVGCtub::TGeoVGCtub(const char *name, Double_t rmin, Double_t rmax, Double_t 
 TGeoVGCtub::TGeoVGCtub(Double_t *params)
   : Base_t("", 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.)
 {
+   SetShapeBit(kGeoCtub);
    SetCtubDimensions(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8],
                      params[9], params[10]);
-   SetShapeBit(kGeoCtub);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -424,7 +425,7 @@ Double_t TGeoVGCtub::GetPhi2() const
 void TGeoVGCtub::SetTubsDimensions(Double_t rmin, Double_t rmax, Double_t dz, Double_t phiStart, Double_t phiEnd)
 {
    SetRMin(rmin);
-   SetRMin(rmax);
+   SetRMax(rmax);
    SetDz(dz);
    auto phi1 = phiStart;
    if (phi1 < 0)
