@@ -16,6 +16,8 @@
 #include <VecGeom/base/Global.h>
 #include <VecGeom/base/Vector3D.h>
 
+#include <iostream>
+
 #ifdef __ROOTCLING__
 // Mocking the base class for rootcling to allow inheritance and 'override'
 namespace vecgeom {
@@ -72,10 +74,6 @@ public:
     using UnplacedVolume_t::operator new[];
     using UnplacedVolume_t::operator delete;
     using UnplacedVolume_t::operator delete[];    
-    // using TObject::operator delete;
-    // using TObject::operator delete[];
-    // using TObject::operator new;
-    // using TObject::operator new[];
 
      /**
      * Default Constructor
@@ -121,54 +119,8 @@ public:
                            Double_t *safe = nullptr) const override;
    Double_t DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact = 1,
                             Double_t step = TGeoShape::Big(), Double_t *safe = nullptr) const override;
-   TGeoVolume *Divide(TGeoVolume *, const char *, Int_t, Int_t, Double_t, Double_t) override { return nullptr; }
-   // void Draw(Option_t *option = "") override { fShape->Draw(option); } // *MENU*
-   // const char *GetAxisName(Int_t iaxis) const override { return (fShape->GetAxisName(iaxis)); }
-   // Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const override
-   // {
-   //    return (fShape->GetAxisRange(iaxis, xlo, xhi));
-   // }
-   // void GetBoundingCylinder(Double_t *param) const override { return (fShape->GetBoundingCylinder(param)); }
-   // const TBuffer3D &GetBuffer3D(Int_t reqSections, Bool_t localFrame) const override
-   // {
-   //    return (fShape->GetBuffer3D(reqSections, localFrame));
-   // }
-   // Int_t GetByteCount() const override { return (fShape->GetByteCount()); }
    Double_t Safety(const Double_t *point, Bool_t in = kTRUE) const override;
-   // Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override
-   // {
-   //    return (fShape->GetPointsOnSegments(npoints, array));
-   // }
-   // Int_t
-   // GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override
-   // {
-   //    return (fShape->GetFittingBox(parambox, mat, dx, dy, dz));
-   // }
-   // TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const override
-   // {
-   //    return (fShape->GetMakeRuntimeShape(mother, mat));
-   // }
-   // void GetMeshNumbers(Int_t &nvert, Int_t &nsegs, Int_t &npols) const override
-   // {
-   //    fShape->GetMeshNumbers(nvert, nsegs, npols);
-   // }
-   // Not needed as done via TGeoBBox
-   // const char *GetName() const override { return (fShape->GetName()); }
-   // Int_t GetNmeshVertices() const override { return (fShape->GetNmeshVertices()); }
-   // Bool_t IsAssembly() const override { return (fShape->IsAssembly()); }
-   // Bool_t IsComposite() const override { return (fShape->IsComposite()); }
-   // Bool_t IsCylType() const override { return (fShape->IsCylType()); }
-   // Bool_t IsReflected() const override { return (fShape->IsReflected()); }
-   // Bool_t IsValidBox() const override { return (fShape->IsValidBox()); }
-   // Bool_t IsVecGeom() const override { return kTRUE; }
    void InspectShape() const override;
-   // TBuffer3D *MakeBuffer3D() const override { return (fShape->MakeBuffer3D()); }
-   // void Paint(Option_t *option = "") override { fShape->Paint(option); }
-   // void SetDimensions(Double_t *param) override { fShape->SetDimensions(param); }
-   // void SetPoints(Double_t *points) const override { fShape->SetPoints(points); }
-   // void SetPoints(Float_t *points) const override { fShape->SetPoints(points); }
-   // void SetSegsAndPols(TBuffer3D &buff) const override { fShape->SetSegsAndPols(buff); }
-   // void Sizeof3D() const override { fShape->Sizeof3D(); }
 
    // vector functions
    void Contains_v(const Double_t *points, Bool_t *inside, Int_t vecsize) const override;
@@ -185,12 +137,14 @@ public:
    DistanceToOut(U3Vector const& position, U3Vector const& direction,
                  vecgeom::Precision stepMax = vecgeom::kInfinityDbl) const override
    {
+     std::cout << "Calling UnplacedVolume_t DistanceToOut" << std::endl;
      return UnplacedVolume_t::DistanceToOut(position, direction, stepMax);
    }
 
    vecgeom::EnumInside
    Inside(U3Vector const& aPoint) const override
    {
+     std::cout << "Calling UnplacedVolume_t Inside" << std::endl;
      return UnplacedVolume_t::Inside(aPoint);
    }
 
@@ -198,6 +152,7 @@ public:
    DistanceToIn(U3Vector const& position, U3Vector const& direction,
                 const vecgeom::Precision step_max = vecgeom::kInfinityDbl) const override
    {
+     std::cout << "Calling UnplacedVolume_t DistanceToIn" << std::endl;
      return UnplacedVolume_t::DistanceToIn(position, direction, step_max);
    }
 

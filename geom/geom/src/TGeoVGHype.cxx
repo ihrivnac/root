@@ -59,7 +59,6 @@ TGeoVGHype::TGeoVGHype(const char *name, Double_t rin, Double_t stin, Double_t r
    // dz<0 can be used to force dz of hyperboloid fit the container volume
    if (dz < 0)
       SetShapeBit(kGeoRunTimeShape);
-   SetName(name);
    ComputeBBox();
 }
 
@@ -72,7 +71,7 @@ TGeoVGHype::TGeoVGHype(const char *name, Double_t rin, Double_t stin, Double_t r
 ///  - param[4] = stout
 
 TGeoVGHype::TGeoVGHype(Double_t *param)
-  : Base_t("", param[1], param[3], param[2], param[4], param[0])
+  : Base_t("", param[1], param[3], param[2] * TMath::DegToRad(), param[4] * TMath::DegToRad(), param[0])
 {
    SetShapeBit(TGeoShape::kGeoHype);
    SetHypeDimensions();

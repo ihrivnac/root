@@ -20,6 +20,9 @@ ROOT_STANDARD_LIBRARY_PACKAGE(GeomPainter
     src/TGeoOverlap.cxx
     src/TGeoPainter.cxx
     src/TGeoTrack.cxx
+  LIBRARIES
+    ${VECGEOM_LIBRARIES}
+    ${CMAKE_DL_LIBS}
   DEPENDENCIES
     Geom
     Gpad

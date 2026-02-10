@@ -37,6 +37,7 @@ geometries.
 #include "TGeoCone.h"
 #include "TGeoSphere.h"
 #include "TGeoArb8.h"
+#include "TGeoPcon.h"
 #include "TGeoPgon.h"
 #include "TGeoTrd1.h"
 #include "TGeoTrd2.h"

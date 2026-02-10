@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoPcon
 #define ROOT_TGeoPcon
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGPcon.h"
+  using TGeoPcon = TGeoVGPcon;
+#else
+
 #include "TGeoBBox.h"
 
 class TGeoPcon : public TGeoBBox {
@@ -108,5 +113,7 @@ public:
 
    ClassDefOverride(TGeoPcon, 1) // polycone class
 };
+
+#endif
 
 #endif

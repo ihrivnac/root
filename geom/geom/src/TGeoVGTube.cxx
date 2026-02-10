@@ -60,7 +60,6 @@ TGeoVGTube::TGeoVGTube(const char *name, Double_t rmin, Double_t rmax, Double_t 
    if ((dz < 0) || (rmin < 0) || (rmax < 0)) {
       SetShapeBit(kGeoRunTimeShape);
    }
-   SetName(name);
    ComputeBBox();
 }
 

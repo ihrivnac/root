@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoTorus
 #define ROOT_TGeoTorus
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGTorus.h"
+  using TGeoTorus = TGeoVGTorus;
+#else
+
 #include "TGeoBBox.h"
 
 class TGeoTorus : public TGeoBBox {
@@ -90,5 +95,7 @@ public:
 
    ClassDefOverride(TGeoTorus, 1) // torus class
 };
+
+#endif
 
 #endif

@@ -70,6 +70,9 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoVGTube.h
     TGeoVGEltu.h
     TGeoVGHype.h
+    TGeoVGTorus.h
+    TGeoVGPcon.h
+    TGeoVGPgon.h
   SOURCES
     src/TGDMLMatrix.cxx
     src/TGeoArb8.cxx
@@ -127,6 +130,9 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TGeoVGCtub.cxx
     src/TGeoVGEltu.cxx
     src/TGeoVGHype.cxx
+    src/TGeoVGTorus.cxx
+    src/TGeoVGPcon.cxx
+    src/TGeoVGPgon.cxx
   LIBRARIES
     ${VECGEOM_LIBRARIES}
     ${CMAKE_DL_LIBS}

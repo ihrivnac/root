@@ -64,7 +64,6 @@ TGeoVGCtub::TGeoVGCtub(const char *name, Double_t rmin, Double_t rmax, Double_t 
                    Double_t lx, Double_t ly, Double_t lz, Double_t tx, Double_t ty, Double_t tz)
    : Base_t(name, rmin, rmax, dz, phi1 * TMath::DegToRad(), (phi2 - phi1) * TMath::DegToRad(), lx, ly, lz, tx, ty, tz)
 {
-   SetName(name);
    fNlow[0] = lx;
    fNlow[1] = ly;
    fNlow[2] = lz;

@@ -38,7 +38,7 @@ namespace vecgeom {
 #include <VecGeom/volumes/UnplacedEllipticalTube.h>
 #endif
 
-class TGeoVGEltu : public TGeoVGAdapter<vecgeom::UnplacedEllipticalTube>
+class TGeoVGEltu final : public TGeoVGAdapter<vecgeom::UnplacedEllipticalTube>
 {
   using Shape_t = vecgeom::UnplacedEllipticalTube;
   using Base_t  = TGeoVGAdapter<vecgeom::UnplacedEllipticalTube>;

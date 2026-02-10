@@ -57,12 +57,10 @@ Bridge class for using a VecGeom solid as TGeoShape.
 template <class UnplacedVolume_t>
 template <typename... T>
 TGeoVGAdapter<UnplacedVolume_t>::TGeoVGAdapter(const TString& name, const T &... params)
-  : TGeoBBox(), UnplacedVolume_t(params...)
+  : TGeoBBox(name.Data(), 0., 0., 0.), UnplacedVolume_t(params...)
 {
-  TGeoBBox::SetName(name.Data()); 
-
   // kHalfTolerance = 0.5*kCarTolerance;
-  TGeoBBox::ComputeBBox();
+  ComputeBBox();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

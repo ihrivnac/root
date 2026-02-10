@@ -56,6 +56,8 @@ polygons, between `phi1` and `phi1+dphi.`
 
 #include "TGeoPgon.h"
 
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #include <iostream>
 
 #include "TGeoManager.h"
@@ -2324,3 +2326,5 @@ void TGeoPgon::Safety_v(const Double_t *points, const Bool_t *inside, Double_t *
    for (Int_t i = 0; i < vecsize; i++)
       safe[i] = Safety(&points[3 * i], inside[i]);
 }
+
+#endif

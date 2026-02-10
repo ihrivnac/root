@@ -39,7 +39,7 @@ namespace vecgeom {
 #include <VecGeom/volumes/UnplacedHype.h>
 #endif
 
-class TGeoVGHype : public TGeoVGAdapter<vecgeom::GenericUnplacedHype>
+class TGeoVGHype final : public TGeoVGAdapter<vecgeom::GenericUnplacedHype>
 {
   using Shape_t = vecgeom::GenericUnplacedHype;
   using Base_t  = TGeoVGAdapter<vecgeom::GenericUnplacedHype>;

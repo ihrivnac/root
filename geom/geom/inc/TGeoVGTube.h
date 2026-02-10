@@ -40,7 +40,7 @@ namespace vecgeom {
 #include <VecGeom/volumes/UnplacedTube.h>
 #endif
 
-class TGeoVGTube : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {  
+class TGeoVGTube final : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {
                             // in GenericUnplacedTube is used in G$
   using Shape_t = vecgeom::GenericUnplacedTube;
   using Base_t = TGeoVGAdapter<vecgeom::GenericUnplacedTube>;
@@ -105,7 +105,7 @@ public:
 //
 // Wrapper class for TGeoTubeSeg to make use of VecGeom Tube.
 
-class TGeoVGTubeSeg : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {
+class TGeoVGTubeSeg final : public TGeoVGAdapter<vecgeom::GenericUnplacedTube> {
                             // in GenericUnplacedTube is used in G$
   using Shape_t = vecgeom::GenericUnplacedTube;
   using Base_t = TGeoVGAdapter<vecgeom::GenericUnplacedTube>;
@@ -186,7 +186,7 @@ public:
 
 #include <VecGeom/volumes/UnplacedCutTube.h>
 
-class TGeoVGCtub : public TGeoVGAdapter<vecgeom::UnplacedCutTube> {
+class TGeoVGCtub final : public TGeoVGAdapter<vecgeom::UnplacedCutTube> {
 
   using Shape_t = vecgeom::UnplacedCutTube;
   using Base_t = TGeoVGAdapter<vecgeom::UnplacedCutTube>;

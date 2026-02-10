@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoPgon
 #define ROOT_TGeoPgon
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGPgon.h"
+  using TGeoPgon = TGeoVGPgon;
+#else
+
 #include "TGeoPcon.h"
 
 #include <mutex>
@@ -117,5 +122,7 @@ public:
 
    ClassDefOverride(TGeoPgon, 1) // polygone class
 };
+
+#endif
 
 #endif

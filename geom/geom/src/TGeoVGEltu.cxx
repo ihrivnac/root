@@ -50,7 +50,6 @@ TGeoVGEltu::TGeoVGEltu(Double_t a, Double_t b, Double_t dz)
 TGeoVGEltu::TGeoVGEltu(const char *name, Double_t a, Double_t b, Double_t dz)
  : Base_t(name, a, b, dz)
 {
-   SetName(name);
    SetShapeBit(TGeoShape::kGeoEltu);
    SetEltuDimensions(a, b, dz);
    ComputeBBox();
