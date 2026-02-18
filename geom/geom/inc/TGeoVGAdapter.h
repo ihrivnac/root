@@ -56,12 +56,12 @@ namespace vecgeom {
 //                                                                        //
 ////////////////////////////////////////////////////////////////////////////
 
-namespace vecgeom {
-class Transformation3D;
-class LogicalVolume;
-class VPlacedVolume;
-class VUnplacedVolume;
-}
+// namespace vecgeom {
+// class Transformation3D;
+// class LogicalVolume;
+// class VPlacedVolume;
+// class VUnplacedVolume;
+// }
 
 template <class UnplacedVolume_t>
 class TGeoVGAdapter : public TGeoBBox, protected UnplacedVolume_t {
@@ -73,7 +73,7 @@ public:
     using UnplacedVolume_t::operator new;
     using UnplacedVolume_t::operator new[];
     using UnplacedVolume_t::operator delete;
-    using UnplacedVolume_t::operator delete[];    
+    using UnplacedVolume_t::operator delete[];
 
      /**
      * Default Constructor

@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoTrd2
 #define ROOT_TGeoTrd2
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGTrd.h"
+  using TGeoTrd2 = TGeoVGTrd;
+#else
+
 #include "TGeoBBox.h"
 
 class TGeoTrd2 : public TGeoBBox {
@@ -79,5 +84,7 @@ public:
 
    ClassDefOverride(TGeoTrd2, 1) // TRD2 shape class
 };
+
+#endif
 
 #endif

@@ -180,7 +180,9 @@ private:
    XMLNodePointer_t CreateParaN(TGeoPara *geoShape);
    XMLNodePointer_t CreateTrapN(TGeoTrap *geoShape);
    XMLNodePointer_t CreateTwistedTrapN(TGeoGtra *geoShape);
+   #if ! defined(ROOT_USE_VECGEOM_SOLIDS)
    XMLNodePointer_t CreateTrdN(TGeoTrd1 *geoShape);
+   #endif
    XMLNodePointer_t CreateTrdN(TGeoTrd2 *geoShape);
    XMLNodePointer_t CreateTubeN(TGeoTubeSeg *geoShape);
    XMLNodePointer_t CreateCutTubeN(TGeoCtub *geoShape);

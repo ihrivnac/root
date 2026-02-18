@@ -1199,18 +1199,18 @@ XMLNodePointer_t TGDMLWrite::CreateTrapN(TGeoTrap *geoShape)
    XMLNodePointer_t mainN;
    const TString fltPrecision = TString::Format("%%.%dg", fFltPrecision);
 
-   // if one base equals 0 create Arb8 instead of trap
-   if ((geoShape->GetBl1() == 0 || geoShape->GetTl1() == 0 || geoShape->GetH1() == 0) ||
-       (geoShape->GetBl2() == 0 || geoShape->GetTl2() == 0 || geoShape->GetH2() == 0)) {
-      mainN = CreateArb8N(geoShape);
-      return mainN;
-   }
+   // // if one base equals 0 create Arb8 instead of trap
+   // if ((geoShape->GetBl1() == 0 || geoShape->GetTl1() == 0 || geoShape->GetH1() == 0) ||
+   //     (geoShape->GetBl2() == 0 || geoShape->GetTl2() == 0 || geoShape->GetH2() == 0)) {
+   //    mainN = CreateArb8N(geoShape);
+   //    return mainN;
+   // }
 
-   // if is twisted then create arb8
-   if (geoShape->IsTwisted()) {
-      mainN = CreateArb8N((TGeoArb8 *)geoShape);
-      return mainN;
-   }
+   // // if is twisted then create arb8
+   // if (geoShape->IsTwisted()) {
+   //    mainN = CreateArb8N((TGeoArb8 *)geoShape);
+   //    return mainN;
+   // }
 
    mainN = fGdmlE->NewChild(nullptr, nullptr, "trap", nullptr);
    TString lname = GenName(geoShape->GetName(), TString::Format("%p", geoShape));
@@ -1301,6 +1301,7 @@ XMLNodePointer_t TGDMLWrite::CreateTwistedTrapN(TGeoGtra *geoShape)
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates "trd" node for GDML from object TGeoTrd1
 
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
 XMLNodePointer_t TGDMLWrite::CreateTrdN(TGeoTrd1 *geoShape)
 {
    XMLNodePointer_t mainN = fGdmlE->NewChild(nullptr, nullptr, "trd", nullptr);
@@ -1320,6 +1321,7 @@ XMLNodePointer_t TGDMLWrite::CreateTrdN(TGeoTrd1 *geoShape)
    fGdmlE->NewAttr(mainN, nullptr, "lunit", fDefault_lunit);
    return mainN;
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Creates "trd" node for GDML from object TGeoTrd2

@@ -36,12 +36,15 @@ End_Macro
 
 */
 
+#include "TGeoTrd2.h"
+
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #include <iostream>
 
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
 #include "TGeoVolume.h"
-#include "TGeoTrd2.h"
 #include "TMath.h"
 
 ClassImp(TGeoTrd2);
@@ -889,3 +892,5 @@ void TGeoTrd2::Safety_v(const Double_t *points, const Bool_t *inside, Double_t *
    for (Int_t i = 0; i < vecsize; i++)
       safe[i] = Safety(&points[3 * i], inside[i]);
 }
+
+#endif

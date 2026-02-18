@@ -150,15 +150,15 @@ public:
       return fRealVolume->Contains(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]));
    }
 
-   Double_t DistFromInside(const Double_t *point, const Double_t *dir, Int_t iact = 1, Double_t step = TGeoShape::Big(),
-                           Double_t *safe = nullptr) const override {
+   Double_t DistFromInside(const Double_t *point, const Double_t *dir, Int_t /*iact*/ = 1, Double_t step = TGeoShape::Big(),
+                           Double_t */*safe*/ = nullptr) const override {
       Double_t dist = fRealVolume->DistanceToOut(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]),
                                               vecgeom::cxx::Vector3D<Double_t>(dir[0], dir[1], dir[2]), step);
       return ((dist < 0.) ? 0. : dist);
    }
 
-   Double_t DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact = 1,
-                            Double_t step = TGeoShape::Big(), Double_t *safe = nullptr) const override {
+   Double_t DistFromOutside(const Double_t *point, const Double_t *dir, Int_t /*iact*/ = 1,
+                            Double_t step = TGeoShape::Big(), Double_t */*safe*/ = nullptr) const override {
       Double_t dist = fRealVolume->DistanceToIn(vecgeom::cxx::Vector3D<Double_t>(point[0], point[1], point[2]),
                                            vecgeom::cxx::Vector3D<Double_t>(dir[0], dir[1], dir[2]), step);
       return ((dist < 0.) ? 0. : dist);

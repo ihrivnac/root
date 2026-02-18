@@ -87,6 +87,9 @@ endif()
 set(ROOTSYS ${CMAKE_BINARY_DIR})
 set(HEADER_OUTPUT_PATH ${CMAKE_BINARY_DIR}/include)
 
+# TODO: Make this better in future
+add_definitions(-DROOT_USE_VECGEOM_SOLIDS)
+
 #---Set the ROOT version--------------------------------------------------------------------
 include(cmake/modules/SetROOTVersion.cmake)
 

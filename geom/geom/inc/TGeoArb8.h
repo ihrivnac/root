@@ -12,6 +12,13 @@
 #ifndef ROOT_TGeoArb8
 #define ROOT_TGeoArb8
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGArb8.h"
+  using TGeoArb8 = TGeoVGArb8;
+  using TGeoTrap = TGeoVGTrap;
+  using TGeoGtra = TGeoVGGtra;
+#else
+
 #include "TGeoBBox.h"
 
 class TGeoArb8 : public TGeoBBox {
@@ -176,5 +183,7 @@ public:
 
    ClassDefOverride(TGeoGtra, 1) // G3 GTRA shape
 };
+
+#endif
 
 #endif

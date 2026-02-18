@@ -73,6 +73,8 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoVGTorus.h
     TGeoVGPcon.h
     TGeoVGPgon.h
+    TGeoVGTrd.h
+    TGeoVGArb8.h
   SOURCES
     src/TGDMLMatrix.cxx
     src/TGeoArb8.cxx
@@ -133,6 +135,10 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TGeoVGTorus.cxx
     src/TGeoVGPcon.cxx
     src/TGeoVGPgon.cxx
+    src/TGeoVGTrd.cxx
+    src/TGeoVGTrap.cxx
+    src/TGeoVGArb8.cxx
+    src/TGeoVGGtra.cxx
   LIBRARIES
     ${VECGEOM_LIBRARIES}
     ${CMAKE_DL_LIBS}
