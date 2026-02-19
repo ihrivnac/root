@@ -38,7 +38,7 @@ TGeoVGTrd::TGeoVGTrd()
 /// constructor (Trd1).
 
 TGeoVGTrd::TGeoVGTrd(Double_t dx1, Double_t dx2, Double_t dy, Double_t dz)
-  : Base_t("", dx1, dx2, dy, dz)
+  : Base_t("", dx1, dx2, dy, dy, dz)
 {
    SetShapeBit(kGeoTrd1);
    if ((dx1 < 0) || (dx2 < 0) || (dy < 0) || (dz < 0)) {
@@ -52,7 +52,7 @@ TGeoVGTrd::TGeoVGTrd(Double_t dx1, Double_t dx2, Double_t dy, Double_t dz)
 /// constructor  (Trd1).
 
 TGeoVGTrd::TGeoVGTrd(const char *name, Double_t dx1, Double_t dx2, Double_t dy, Double_t dz)
-  : Base_t(name, dx1, dx2, dy, dz)
+  : Base_t(name, dx1, dx2, dy, dy, dz)
 {
    SetShapeBit(kGeoTrd1);
    if ((dx1 < 0) || (dx2 < 0) || (dy < 0) || (dz < 0)) {
@@ -134,6 +134,14 @@ Double_t TGeoVGTrd::GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) cons
    xhi = 0;
    Double_t dx = 0;
    switch (iaxis) {
+   case 2:
+      if (dy1() == dy2()) {
+        // code from TGeoTrd1
+        xlo = -dy1();
+        xhi = dy1();
+        dx = xhi - xlo;
+      }
+      return dx;
    case 3:
       xlo = -dz();
       xhi = dz();
@@ -234,7 +242,26 @@ TGeoVGTrd::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t nd
    Double_t end = start + ndiv * step;
    switch (iaxis) {
    case 1: Warning("Divide", "dividing a Trd2 on X not implemented"); return nullptr;
-   case 2: Warning("Divide", "dividing a Trd2 on Y not implemented"); return nullptr;
+   case 2:
+      if (dy1() != dy2()) {
+        Warning("Divide", "dividing a Trd2 on Y not implemented"); return nullptr;
+      }
+      else {
+         // code from TGeoTrd1
+         finder = new TGeoPatternY(voldiv, ndiv, start, end);
+         voldiv->SetFinder(finder);
+         finder->SetDivIndex(voldiv->GetNdaughters());
+         shape = new TGeoVGTrd(dx1(), dx2(), step / 2, dz());
+         vol = new TGeoVolume(divname, shape, voldiv->GetMedium());
+         vmulti = gGeoManager->MakeVolumeMulti(divname, voldiv->GetMedium());
+         vmulti->AddVolume(vol);
+         opt = "Y";
+         for (id = 0; id < ndiv; id++) {
+            voldiv->AddNodeOffset(vol, id, start + step / 2 + id * step, opt.Data());
+            ((TGeoNodeOffset *)voldiv->GetNodes()->At(voldiv->GetNdaughters() - 1))->SetFinder(finder);
+         }
+         return vmulti;
+      }
    case 3:
       finder = new TGeoPatternZ(voldiv, ndiv, start, end);
       vmulti = gGeoManager->MakeVolumeMulti(divname, voldiv->GetMedium());

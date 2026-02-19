@@ -75,6 +75,7 @@ TGeoVGTube::TGeoVGTube(Double_t *param)
    SetShapeBit(TGeoShape::kGeoTube);
    if ((param[0] < 0) || (param[1] < 0) || (param[2] < 0))
       SetShapeBit(kGeoRunTimeShape);
+   ComputeBBox();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
