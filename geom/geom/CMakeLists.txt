@@ -76,6 +76,8 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoVGTrd.h
     TGeoVGArb8.h
     TGeoVGCone.h
+    TGeoVGSphere.h
+    TGeoVGXtru.h
   SOURCES
     src/TGDMLMatrix.cxx
     src/TGeoArb8.cxx
@@ -142,6 +144,8 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TGeoVGGtra.cxx
     src/TGeoVGCone.cxx
     src/TGeoVGConeSeg.cxx
+    src/TGeoVGSphere.cxx
+    src/TGeoVGXtru.cxx
   LIBRARIES
     ${VECGEOM_LIBRARIES}
     ${CMAKE_DL_LIBS}

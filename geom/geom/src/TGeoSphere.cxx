@@ -48,13 +48,16 @@ End_Macro
 
 */
 
+#include "TGeoSphere.h"
+
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #include <iostream>
 
 #include "TGeoCone.h"
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
 #include "TVirtualGeoPainter.h"
-#include "TGeoSphere.h"
 #include "TBuffer3D.h"
 #include "TBuffer3DTypes.h"
 #include "TMath.h"
@@ -2194,3 +2197,5 @@ void TGeoSphere::Safety_v(const Double_t *points, const Bool_t *inside, Double_t
    for (Int_t i = 0; i < vecsize; i++)
       safe[i] = Safety(&points[3 * i], inside[i]);
 }
+
+#endif

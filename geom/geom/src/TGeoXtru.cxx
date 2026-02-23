@@ -91,6 +91,8 @@ Double_t y0, Double_t scale);
 
 #include "TGeoXtru.h"
 
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #include <iostream>
 
 #include "TBuffer3D.h"
@@ -1424,3 +1426,5 @@ void TGeoXtru::Safety_v(const Double_t *points, const Bool_t *inside, Double_t *
    for (Int_t i = 0; i < vecsize; i++)
       safe[i] = Safety(&points[3 * i], inside[i]);
 }
+
+#endif
