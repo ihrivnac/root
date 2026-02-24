@@ -24,6 +24,8 @@ private:
    // data members
    TGeoBoolNode *fNode; // top boolean node
 
+   static std::vector<TString> fgExpressions;
+
 protected:
    TGeoCompositeShape(const TGeoCompositeShape &) = delete;
    TGeoCompositeShape &operator=(const TGeoCompositeShape &) = delete;
@@ -36,6 +38,9 @@ public:
    TGeoCompositeShape(const char *name, TGeoBoolNode *node);
    // destructor
    ~TGeoCompositeShape() override;
+
+   static const std::vector<TString>& Expressions() { return fgExpressions; }
+
    // methods
    Double_t Capacity() const override;
    void ClearThreadData() const override;

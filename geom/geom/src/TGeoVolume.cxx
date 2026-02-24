@@ -401,6 +401,36 @@ volumes (or volume assemblies) as content.
 #include "TGeoCompositeShape.h"
 #include "TGeoVoxelFinder.h"
 #include "TGeoExtension.h"
+#include "TGeoBoolNode.h"
+
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+#include "TGeoVGCompositeOptimiser.h"
+#endif
+
+#include <iostream>
+
+namespace {
+/**
+ * Recursively counts the number of basic shapes within a composite shape.
+ * @param shape The TGeoShape to inspect.
+ * @return The total count of leaf components.
+ */
+Int_t CountComponents(TGeoShape* shape) {
+    // Base case: if it's not composite, it's a single component
+    if (!shape->IsComposite()) {
+        return 1;
+    }
+
+    TGeoCompositeShape* composite = static_cast<TGeoCompositeShape*>(shape);
+    TGeoBoolNode* node = composite->GetBoolNode();
+    
+    if (!node) return 1;
+
+    // Recursively count the left and right branches of the boolean operation
+    return CountComponents(node->GetLeftShape()) + CountComponents(node->GetRightShape());
+}
+
+}
 
 ClassImp(TGeoVolume);
 
@@ -485,6 +515,26 @@ TGeoVolume::TGeoVolume(const char *name, const TGeoShape *shape, const TGeoMediu
          Fatal("ctor", "Shape of volume %s invalid. Aborting!", fName.Data());
       }
    }
+
+// #if defined(ROOT_USE_VECGEOM_SOLIDS)
+//    // replace TGeoCmposite shapes with optimized shapes using MultiUnion
+//    if (fShape->IsComposite() && CountComponents(fShape) > 2 ) {
+//       TGeoVGCompositeOptimiser compositeOptimiser;
+//       Bool_t optimised = true;
+//       auto newShape = compositeOptimiser.GetNewShape(fShape, optimised);
+//       if (! optimised) {
+//           std::cout << shape->GetName() 
+//             << "was not optimised; nof components: " << CountComponents(fShape) << std::endl;
+//       }
+//       else {
+//         std::cout << shape->GetName() 
+//           << "was optimised; nof components: " << CountComponents(fShape) 
+//           << " -> "  << CountComponents(newShape)  << std::endl;
+//         fShape = newShape;
+//       }
+//    } 
+// #endif
+
    fMedium = (TGeoMedium *)med;
    if (fMedium && fMedium->GetMaterial())
       fMedium->GetMaterial()->SetUsed();

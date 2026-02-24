@@ -115,6 +115,7 @@
   #pragma link C++ class TGeoVGAdapter<vecgeom::GenericUnplacedCone>+;
   #pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedSphere>+;
   #pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedExtruded>+;
+  #pragma link C++ class TGeoVGAdapter<vecgeom::UnplacedMultiUnion>+;
 #endif
 #pragma link C++ struct std::map < std::thread::id, TGeoNavigatorArray * > ;
 #pragma link C++ struct std::pair < std::thread::id, TGeoNavigatorArray * > ;

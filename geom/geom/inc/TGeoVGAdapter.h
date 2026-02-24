@@ -130,6 +130,7 @@ public:
    void DistFromOutside_v(const Double_t *points, const Double_t *dirs, Double_t *dists, Int_t vecsize,
                           Double_t *step) const override;
    void Safety_v(const Double_t *points, const Bool_t *inside, Double_t *safe, Int_t vecsize) const override;
+   Bool_t IsVecGeom() const override { return kTRUE; }
 
     // VecGeom overridden methods ---------------------------------------------
 

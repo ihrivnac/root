@@ -194,6 +194,8 @@ criteria. Volumes created based on composite shapes cannot be divided.
 #include "TGeoCompositeShape.h"
 ClassImp(TGeoCompositeShape);
 
+std::vector<TString> TGeoCompositeShape::fgExpressions;
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Needed just for cleanup.
 
@@ -235,6 +237,8 @@ TGeoCompositeShape::TGeoCompositeShape(const char *name, const char *expression)
       return;
    }
    ComputeBBox();
+
+   fgExpressions.push_back(expression);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -251,6 +255,8 @@ TGeoCompositeShape::TGeoCompositeShape(const char *expression) : TGeoBBox(0, 0, 
       return;
    }
    ComputeBBox();
+
+   fgExpressions.push_back(expression);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
