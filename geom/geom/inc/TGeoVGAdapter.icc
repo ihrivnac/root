@@ -57,7 +57,7 @@ Bridge class for using a VecGeom solid as TGeoShape.
 template <class UnplacedVolume_t>
 template <typename... T>
 TGeoVGAdapter<UnplacedVolume_t>::TGeoVGAdapter(const TString& name, const T &... params)
-  : TGeoBBox(name.Data(), 0., 0., 0.), UnplacedVolume_t(params...)
+  : TGeoShape(name.Data()), UnplacedVolume_t(params...)
 {
   // kHalfTolerance = 0.5*kCarTolerance;
   ComputeBBox();
@@ -88,7 +88,7 @@ operator==(const TGeoVGAdapter& rhs) const
 // template <class UnplacedVolume_t>
 // TGeoVGAdapter<UnplacedVolume_t>::
 // TGeoVGAdapter(const TGeoVGAdapter& rhs)
-//   : TGeoBBox(rhs), UnplacedVolume_t(rhs)
+//   : TGeoShape(rhs), UnplacedVolume_t(rhs)
 // {
 //   // kHalfTolerance = 0.5*kCarTolerance;
 // }
@@ -109,7 +109,7 @@ operator==(const TGeoVGAdapter& rhs) const
 
 //   // Copy base class data
 //   //
-//   TGeoBBox::operator=(rhs);
+//   TGeoShape::operator=(rhs);
 //   UnplacedVolume_t::operator=(rhs);
 
 //   // Copy data
@@ -132,10 +132,11 @@ operator==(const TGeoVGAdapter& rhs) const
 ////////////////////////////////////////////////////////////////////////////////
 /// Returns analytic capacity of the solid
 
-// Double_t TGeoVGAdapter<UnplacedVolume_t>::Capacity() const
-// {
-//    return fVGShape->Capacity();
-// }
+template <class UnplacedVolume_t>
+Double_t TGeoVGAdapter<UnplacedVolume_t>::Capacity() const
+{
+   return UnplacedVolume_t::Capacity();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Normal computation.

@@ -12,9 +12,9 @@
 #ifndef ROOT_TGeoPara
 #define ROOT_TGeoPara
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoPara : public TGeoBBox {
+class TGeoPara : public TGeoBaseBox {
 protected:
    // data members
    Double_t fX;     // X half-length
@@ -60,7 +60,7 @@ public:
    void GetBoundingCylinder(Double_t *param) const override;
    Int_t GetByteCount() const override { return 48; }
    Int_t
-   GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
+   GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
    TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const override;
    Int_t GetNmeshVertices() const override { return 8; }
    Double_t GetX() const { return fX; }

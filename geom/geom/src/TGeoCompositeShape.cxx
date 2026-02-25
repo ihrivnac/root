@@ -146,7 +146,7 @@ used many times in the same expression, as in the following example:
    mgr->SetTopVolume(top);
 
    // make shape components
-   TGeoBBox *sbox  = new TGeoBBox("B",100,125*sq2,125*sq2);
+   TGeoBaseBox *sbox  = new TGeoBaseBox("B",100,125*sq2,125*sq2);
    TGeoTube *stub  = new TGeoTube("T",0,100,250);
    TGeoPgon *spgon = new TGeoPgon("P",0.,360.,6,2);
    spgon->DefineSection(0,-250,0,80);
@@ -215,7 +215,7 @@ void TGeoCompositeShape::CreateThreadData(Int_t nthreads)
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor
 
-TGeoCompositeShape::TGeoCompositeShape() : TGeoBBox(0, 0, 0)
+TGeoCompositeShape::TGeoCompositeShape() : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoComb);
    fNode = nullptr;
@@ -224,7 +224,7 @@ TGeoCompositeShape::TGeoCompositeShape() : TGeoBBox(0, 0, 0)
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor
 
-TGeoCompositeShape::TGeoCompositeShape(const char *name, const char *expression) : TGeoBBox(0, 0, 0)
+TGeoCompositeShape::TGeoCompositeShape(const char *name, const char *expression) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoComb);
    SetName(name);
@@ -240,7 +240,7 @@ TGeoCompositeShape::TGeoCompositeShape(const char *name, const char *expression)
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor
 
-TGeoCompositeShape::TGeoCompositeShape(const char *expression) : TGeoBBox(0, 0, 0)
+TGeoCompositeShape::TGeoCompositeShape(const char *expression) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoComb);
    fNode = nullptr;
@@ -256,7 +256,7 @@ TGeoCompositeShape::TGeoCompositeShape(const char *expression) : TGeoBBox(0, 0, 
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor with a Boolean node
 
-TGeoCompositeShape::TGeoCompositeShape(const char *name, TGeoBoolNode *node) : TGeoBBox(0, 0, 0)
+TGeoCompositeShape::TGeoCompositeShape(const char *name, TGeoBoolNode *node) : TGeoBaseBox(0, 0, 0)
 {
    SetName(name);
    fNode = node;
@@ -343,7 +343,7 @@ Int_t TGeoCompositeShape::DistancetoPrimitive(Int_t px, Int_t py)
 Double_t TGeoCompositeShape::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact, Double_t step,
                                              Double_t *safe) const
 {
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    if (fNode)
@@ -389,7 +389,7 @@ void TGeoCompositeShape::InspectShape() const
 {
    printf("*** TGeoCompositeShape : %s = %s\n", GetName(), GetTitle());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -437,7 +437,7 @@ Bool_t TGeoCompositeShape::PaintComposite(Option_t *option) const
 
    if (fNode) {
       // Fill out the buffer for the composite shape - nothing extra
-      // over TGeoBBox
+      // over TGeoBaseBox
       Bool_t preferLocal = viewer->PreferLocalFrame();
       if (TBuffer3D::GetCSLevel())
          preferLocal = kFALSE;

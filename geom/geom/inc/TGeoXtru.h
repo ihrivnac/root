@@ -17,14 +17,14 @@
   using TGeoXtru = TGeoVGXtru;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 #include <mutex>
 #include <vector>
 
 class TGeoPolygon;
 
-class TGeoXtru : public TGeoBBox {
+class TGeoXtru : public TGeoBaseBox {
 public:
    struct ThreadData_t {
       Int_t fSeg;         // !current segment [0,fNvert-1]

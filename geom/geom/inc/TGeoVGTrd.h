@@ -82,7 +82,7 @@ public:
    Double_t GetDy() const;  // returns pnly if Trd1
 
    Int_t
-   GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
+   GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
    TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const override;
    // void GetVisibleCorner(const Double_t *point, Double_t *vertex, Double_t *normals) const;
    // void GetOppositeCorner(const Double_t *point, Int_t inorm, Double_t *vertex, Double_t *normals) const;

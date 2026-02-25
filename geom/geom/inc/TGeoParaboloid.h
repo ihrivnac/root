@@ -12,9 +12,9 @@
 #ifndef ROOT_TGeoParaboloid
 #define ROOT_TGeoParaboloid
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoParaboloid : public TGeoBBox {
+class TGeoParaboloid : public TGeoBaseBox {
 private:
    Double_t fRlo; // radius at z=-dz
    Double_t fRhi; // radius at z=+dz

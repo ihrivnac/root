@@ -84,7 +84,7 @@ TGeoSphere::TGeoSphere()
 /// Default constructor specifying minimum and maximum radius
 
 TGeoSphere::TGeoSphere(Double_t rmin, Double_t rmax, Double_t theta1, Double_t theta2, Double_t phi1, Double_t phi2)
-   : TGeoBBox(0, 0, 0)
+   : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoSph);
    SetSphDimensions(rmin, rmax, theta1, theta2, phi1, phi2);
@@ -97,7 +97,7 @@ TGeoSphere::TGeoSphere(Double_t rmin, Double_t rmax, Double_t theta1, Double_t t
 
 TGeoSphere::TGeoSphere(const char *name, Double_t rmin, Double_t rmax, Double_t theta1, Double_t theta2, Double_t phi1,
                        Double_t phi2)
-   : TGeoBBox(name, 0, 0, 0)
+   : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoSph);
    SetSphDimensions(rmin, rmax, theta1, theta2, phi1, phi2);
@@ -114,7 +114,7 @@ TGeoSphere::TGeoSphere(const char *name, Double_t rmin, Double_t rmax, Double_t 
 /// param[4] = phi1
 /// param[5] = phi2
 
-TGeoSphere::TGeoSphere(Double_t *param, Int_t nparam) : TGeoBBox(0, 0, 0)
+TGeoSphere::TGeoSphere(Double_t *param, Int_t nparam) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoSph);
    SetDimensions(param, nparam);
@@ -148,7 +148,7 @@ void TGeoSphere::ComputeBBox()
 {
    if (TGeoShape::IsSameWithinTolerance(TMath::Abs(fTheta2 - fTheta1), 180)) {
       if (TGeoShape::IsSameWithinTolerance(TMath::Abs(fPhi2 - fPhi1), 360)) {
-         TGeoBBox::SetBoxDimensions(fRmax, fRmax, fRmax);
+         TGeoBaseBox::SetBoxDimensions(fRmax, fRmax, fRmax);
          memset(fOrigin, 0, 3 * sizeof(Double_t));
          return;
       }
@@ -438,7 +438,7 @@ Int_t TGeoSphere::DistancetoPrimitive(Int_t px, Int_t py)
 Double_t
 TGeoSphere::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact, Double_t step, Double_t *safe) const
 {
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    Double_t saf[6];
@@ -1206,7 +1206,7 @@ void TGeoSphere::InspectShape() const
    printf("    Ph1  = %11.5f\n", fPhi1);
    printf("    Ph2  = %11.5f\n", fPhi2);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2080,7 +2080,7 @@ const TBuffer3D &TGeoSphere::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 {
    static TBuffer3DSphere buffer;
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       buffer.fRadiusInner = fRmin;

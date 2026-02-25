@@ -247,12 +247,16 @@ void TGeoVGGtra::ComputeBBox()
       if (ymax < fXY[i][1])
          ymax = fXY[i][1];
    }
-   fDX = 0.5 * (xmax - xmin);
-   fDY = 0.5 * (ymax - ymin);
-   fDZ = fDz;
-   fOrigin[0] = 0.5 * (xmax + xmin);
-   fOrigin[1] = 0.5 * (ymax + ymin);
-   fOrigin[2] = 0;
+
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = 0.5 * (xmax - xmin);
+   dy = 0.5 * (ymax - ymin);
+   dz = fDz;
+   origin[0] = 0.5 * (xmax + xmin);
+   origin[1] = 0.5 * (ymax + ymin);
+   origin[2] = 0;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
    SetShapeBit(kGeoClosedShape);
 }
 
@@ -348,6 +352,16 @@ void TGeoVGGtra::ComputeTwist()
       Error("ComputeTwist", "Shape %s type Arb8: Malformed polygon with crossing opposite segments", GetName());
       InspectShape();
    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Divide this shape along one axis.
+
+TGeoVolume *TGeoVGGtra::Divide(TGeoVolume *voldiv, const char * /*divname*/, Int_t /*iaxis*/, Int_t /*ndiv*/,
+                             Double_t /*start*/, Double_t /*step*/)
+{
+   Error("Divide", "Division of a general trapezoid not implemented");
+   return voldiv;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

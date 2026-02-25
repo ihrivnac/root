@@ -9,13 +9,18 @@
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
 
-#ifndef ROOT_TGeoBBox
-#define ROOT_TGeoBBox
+#ifndef ROOT_TGeoBaseBox
+#define ROOT_TGeoBaseBox
+
+// Box with shifted origin
+// As it has no equivalent in VecGeom, we introduce this class as an extra class
+// to have it available when TGeoBBox is replaced with VecGeom box
+// Only constructors with 'origin parameters' are kept; the 'origin' parameter
+// will not be made available in  TGeoVGBox
 
 #include "TGeoShape.h"
-#include "TGeoBaseBox.h"
 
-class TGeoBBox : public TGeoShape {
+class TGeoBaseBox : public TGeoShape {
 protected:
    // data members
    Double_t fDX;        // X half-length
@@ -23,20 +28,17 @@ protected:
    Double_t fDZ;        // Z half-length
    Double_t fOrigin[3]; // box origin
                         // methods
-   TGeoBaseBox fBoundingBox; // TO DO: let share the data with TGeoBBox via a data struct wrapper
-   void FillBuffer3D(TBuffer3D &buffer, Int_t reqSections, Bool_t localFrame) const override;
-
-   TGeoBBox(const TGeoBBox &) = delete;
-   TGeoBBox &operator=(const TGeoBBox &) = delete;
+   TGeoBaseBox(const TGeoBaseBox &) = delete;
+   TGeoBaseBox &operator=(const TGeoBaseBox &) = delete;
 
 public:
    // constructors
-   TGeoBBox();
-   TGeoBBox(Double_t dx, Double_t dy, Double_t dz, Double_t *origin = nullptr);
-   TGeoBBox(const char *name, Double_t dx, Double_t dy, Double_t dz, Double_t *origin = nullptr);
-   TGeoBBox(Double_t *param);
+   TGeoBaseBox();
+   TGeoBaseBox(Double_t dx, Double_t dy, Double_t dz, Double_t *origin = nullptr);
+   TGeoBaseBox(const char *name, Double_t dx, Double_t dy, Double_t dz, Double_t *origin = nullptr);
+   TGeoBaseBox(Double_t *param);
    // destructor
-   ~TGeoBBox() override;
+   ~TGeoBaseBox() override;
    // methods
    
    Double_t Capacity() const override;
@@ -62,9 +64,11 @@ public:
                                    const Double_t *origin, Double_t stepmax = TGeoShape::Big());
    TGeoVolume *
    Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndiv, Double_t start, Double_t step) override;
+   void FillBuffer3D(TBuffer3D &buffer, Int_t reqSections, Bool_t localFrame) const override;
+      // moved from proceted to public
    const char *GetAxisName(Int_t iaxis) const override;
    Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const override;
-   const TGeoBaseBox* GetBoundingBox() const override { return &fBoundingBox; }
+   const TGeoBaseBox* GetBoundingBox() const override { return this; }
    void GetBoundingCylinder(Double_t *param) const override;
    const TBuffer3D &GetBuffer3D(Int_t reqSections, Bool_t localFrame) const override;
    Int_t GetByteCount() const override { return 36; }
@@ -96,7 +100,7 @@ public:
    void SetSegsAndPols(TBuffer3D &buffer) const override;
    void Sizeof3D() const override;
 
-   ClassDefOverride(TGeoBBox, 1) // box primitive
+   ClassDefOverride(TGeoBaseBox, 1) // box primitive
 };
 
 #endif

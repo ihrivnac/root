@@ -15,7 +15,7 @@
 #include <map>
 #include "TGeoVector3.h"
 #include "TGeoTypedefs.h"
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 class TGeoFacet {
    using Vertex_t = Tessellated::Vertex_t;
@@ -53,7 +53,7 @@ public:
    bool IsNeighbour(const TGeoFacet &other, bool &flip) const;
 };
 
-class TGeoTessellated : public TGeoBBox {
+class TGeoTessellated : public TGeoBaseBox {
 
 public:
    using Vertex_t = Tessellated::Vertex_t;

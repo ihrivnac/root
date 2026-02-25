@@ -94,8 +94,11 @@ void TGeoVGSphere::ComputeBBox()
 {
    if (TGeoShape::IsSameWithinTolerance(TMath::Abs(GetDeltaThetaAngle() * TMath::RadToDeg()), 180)) {
       if (TGeoShape::IsSameWithinTolerance(TMath::Abs(GetDeltaPhiAngle() * TMath::RadToDeg()), 360)) {
-         TGeoBBox::SetBoxDimensions(GetOuterRadius(), GetOuterRadius(), GetOuterRadius());
-         memset(fOrigin, 0, 3 * sizeof(Double_t));
+         Double_t dx, dy, dz;
+         Double_t origin[3];
+         dx = dy = dz = GetOuterRadius();
+         memset(origin, 0, 3 * sizeof(Double_t));
+         fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
          return;
       }
    }
@@ -166,13 +169,15 @@ void TGeoVGSphere::ComputeBBox()
    Double_t zmin = xc[TMath::LocMin(4, &xc[0])];
    Double_t zmax = xc[TMath::LocMax(4, &xc[0])];
 
-   fOrigin[0] = (xmax + xmin) / 2;
-   fOrigin[1] = (ymax + ymin) / 2;
-   fOrigin[2] = (zmax + zmin) / 2;
-   ;
-   fDX = (xmax - xmin) / 2;
-   fDY = (ymax - ymin) / 2;
-   fDZ = (zmax - zmin) / 2;
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = (xmax - xmin) / 2;
+   dy = (ymax - ymin) / 2;
+   dz = (zmax - zmin) / 2;
+   origin[0] = (xmax + xmin) / 2;
+   origin[1] = (ymax + ymin) / 2;
+   origin[2] = (zmax + zmin) / 2;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
 }
 
 
@@ -346,7 +351,7 @@ void TGeoVGSphere::InspectShape() const
    printf("    Ph1  = %11.5f\n", GetStartPhiAngle() * TMath::RadToDeg());
    printf("    Ph2  = %11.5f\n", (GetStartPhiAngle() + GetDeltaPhiAngle()) * TMath::RadToDeg());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1179,7 +1184,7 @@ const TBuffer3D &TGeoVGSphere::GetBuffer3D(Int_t reqSections, Bool_t localFrame)
 {
    static TBuffer3DSphere buffer;
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       buffer.fRadiusInner = GetInnerRadius();

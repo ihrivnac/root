@@ -50,6 +50,7 @@
 #pragma link C++ class TGeoHelix + ;
 #pragma link C++ class TGeoHalfSpace + ;
 #pragma link C++ class TGeoBBox + ;
+#pragma link C++ class TGeoBaseBox + ;
 #pragma link C++ class TGeoPara + ;
 #pragma link C++ class TGeoSphere + ;
 #pragma link C++ class TGeoTube + ;

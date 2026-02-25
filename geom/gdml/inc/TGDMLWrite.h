@@ -19,6 +19,7 @@
 #include "TGeoParaboloid.h"
 #include "TGeoSphere.h"
 #include "TGeoArb8.h"
+#include "TGeoBBox.h"
 #include "TGeoCone.h"
 #include "TGeoPara.h"
 #include "TGeoTrd1.h"

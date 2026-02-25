@@ -19,9 +19,9 @@
   using TGeoGtra = TGeoVGGtra;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoArb8 : public TGeoBBox {
+class TGeoArb8 : public TGeoBaseBox {
 protected:
    enum EGeoArb8Type {
       //      kArb8Trd1 = BIT(25), // trd1 type
@@ -72,7 +72,7 @@ public:
    Bool_t GetPointsOnFacet(Int_t /*index*/, Int_t /*npoints*/, Double_t * /*array*/) const override;
    Double_t GetDz() const { return fDz; }
    Int_t
-   GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
+   GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
    TGeoShape *GetMakeRuntimeShape(TGeoShape * /*mother*/, TGeoMatrix * /*mat*/) const override { return nullptr; }
    static void GetPlaneNormal(Double_t *p1, Double_t *p2, Double_t *p3, Double_t *norm);
    Double_t *GetVertices() { return &fXY[0][0]; }

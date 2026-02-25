@@ -241,7 +241,7 @@ TGeoPatternX::TGeoPatternX()
 
 TGeoPatternX::TGeoPatternX(TGeoVolume *vol, Int_t ndivisions) : TGeoPatternFinder(vol, ndivisions)
 {
-   Double_t dx = ((TGeoBBox *)vol->GetShape())->GetDX();
+   Double_t dx = vol->GetShape()->GetBoundingBox()->GetDX();
    fStart = -dx;
    fEnd = dx;
    fStep = 2 * dx / ndivisions;
@@ -253,7 +253,7 @@ TGeoPatternX::TGeoPatternX(TGeoVolume *vol, Int_t ndivisions) : TGeoPatternFinde
 
 TGeoPatternX::TGeoPatternX(TGeoVolume *vol, Int_t ndivisions, Double_t step) : TGeoPatternFinder(vol, ndivisions)
 {
-   Double_t dx = ((TGeoBBox *)vol->GetShape())->GetDX();
+   Double_t dx = vol->GetShape()->GetBoundingBox()->GetDX();
    fStart = -dx;
    fEnd = fStart + ndivisions * step;
    fStep = step;
@@ -435,7 +435,7 @@ TGeoPatternY::TGeoPatternY()
 
 TGeoPatternY::TGeoPatternY(TGeoVolume *vol, Int_t ndivisions) : TGeoPatternFinder(vol, ndivisions)
 {
-   Double_t dy = ((TGeoBBox *)vol->GetShape())->GetDY();
+   Double_t dy = vol->GetShape()->GetBoundingBox()->GetDY();
    fStart = -dy;
    fEnd = dy;
    fStep = 2 * dy / ndivisions;
@@ -447,7 +447,7 @@ TGeoPatternY::TGeoPatternY(TGeoVolume *vol, Int_t ndivisions) : TGeoPatternFinde
 
 TGeoPatternY::TGeoPatternY(TGeoVolume *vol, Int_t ndivisions, Double_t step) : TGeoPatternFinder(vol, ndivisions)
 {
-   Double_t dy = ((TGeoBBox *)vol->GetShape())->GetDY();
+   Double_t dy = vol->GetShape()->GetBoundingBox()->GetDY();
    fStart = -dy;
    fEnd = fStart + ndivisions * step;
    fStep = step;
@@ -628,7 +628,7 @@ TGeoPatternZ::TGeoPatternZ()
 
 TGeoPatternZ::TGeoPatternZ(TGeoVolume *vol, Int_t ndivisions) : TGeoPatternFinder(vol, ndivisions)
 {
-   Double_t dz = ((TGeoBBox *)vol->GetShape())->GetDZ();
+   Double_t dz = vol->GetShape()->GetBoundingBox()->GetDZ();
    fStart = -dz;
    fEnd = dz;
    fStep = 2 * dz / ndivisions;
@@ -639,7 +639,7 @@ TGeoPatternZ::TGeoPatternZ(TGeoVolume *vol, Int_t ndivisions) : TGeoPatternFinde
 
 TGeoPatternZ::TGeoPatternZ(TGeoVolume *vol, Int_t ndivisions, Double_t step) : TGeoPatternFinder(vol, ndivisions)
 {
-   Double_t dz = ((TGeoBBox *)vol->GetShape())->GetDZ();
+   Double_t dz = vol->GetShape()->GetBoundingBox()->GetDZ();
    fStart = -dz;
    fEnd = fStart + ndivisions * step;
    fStep = step;

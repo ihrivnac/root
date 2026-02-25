@@ -66,7 +66,7 @@ TGeoTrd1::TGeoTrd1()
 ////////////////////////////////////////////////////////////////////////////////
 /// constructor.
 
-TGeoTrd1::TGeoTrd1(Double_t dx1, Double_t dx2, Double_t dy, Double_t dz) : TGeoBBox(0, 0, 0)
+TGeoTrd1::TGeoTrd1(Double_t dx1, Double_t dx2, Double_t dy, Double_t dz) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(kGeoTrd1);
    fDx1 = dx1;
@@ -83,7 +83,7 @@ TGeoTrd1::TGeoTrd1(Double_t dx1, Double_t dx2, Double_t dy, Double_t dz) : TGeoB
 ////////////////////////////////////////////////////////////////////////////////
 /// constructor.
 
-TGeoTrd1::TGeoTrd1(const char *name, Double_t dx1, Double_t dx2, Double_t dy, Double_t dz) : TGeoBBox(name, 0, 0, 0)
+TGeoTrd1::TGeoTrd1(const char *name, Double_t dx1, Double_t dx2, Double_t dy, Double_t dz) : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(kGeoTrd1);
    fDx1 = dx1;
@@ -104,7 +104,7 @@ TGeoTrd1::TGeoTrd1(const char *name, Double_t dx1, Double_t dx2, Double_t dy, Do
 ///  - param[2] = dy
 ///  - param[3] = dz
 
-TGeoTrd1::TGeoTrd1(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoTrd1::TGeoTrd1(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(kGeoTrd1);
    SetDimensions(param);
@@ -538,13 +538,13 @@ Double_t TGeoTrd1::GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const
 
 void TGeoTrd1::GetBoundingCylinder(Double_t *param) const
 {
-   TGeoBBox::GetBoundingCylinder(param);
+   TGeoBaseBox::GetBoundingCylinder(param);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Fills real parameters of a positioned box inside this. Returns 0 if successful.
 
-Int_t TGeoTrd1::GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
+Int_t TGeoTrd1::GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
 {
    dx = dy = dz = 0;
    if (mat->IsRotation()) {
@@ -646,7 +646,7 @@ void TGeoTrd1::InspectShape() const
    printf("    dy  = %11.5f\n", fDy);
    printf("    dz  = %11.5f\n", fDz);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -804,7 +804,7 @@ void TGeoTrd1::SetPoints(Float_t *points) const
 
 void TGeoTrd1::Sizeof3D() const
 {
-   TGeoBBox::Sizeof3D();
+   TGeoBaseBox::Sizeof3D();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -17,9 +17,9 @@
   using TGeoTorus = TGeoVGTorus;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoTorus : public TGeoBBox {
+class TGeoTorus : public TGeoBaseBox {
 protected:
    // data members
    Double_t fR;    // axial radius

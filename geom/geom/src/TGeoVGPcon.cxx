@@ -283,12 +283,17 @@ void TGeoVGPcon::ComputeBBox()
       ddp += 360;
    if (ddp <= fDphi)
       ymin = -rmax;
-   fOrigin[0] = (xmax + xmin) / 2;
-   fOrigin[1] = (ymax + ymin) / 2;
-   fOrigin[2] = (zmax + zmin) / 2;
-   fDX = (xmax - xmin) / 2;
-   fDY = (ymax - ymin) / 2;
-   fDZ = (zmax - zmin) / 2;
+
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = (xmax - xmin) / 2;
+   dy = (ymax - ymin) / 2;
+   dz = (zmax - zmin) / 2;
+   origin[0] = (xmax + xmin) / 2;
+   origin[1] = (ymax + ymin) / 2;
+   origin[2] = (zmax + zmin) / 2;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
+
    SetShapeBit(kGeoClosedShape);
 }
 
@@ -597,7 +602,7 @@ void TGeoVGPcon::InspectShape() const
    for (Int_t ipl = 0; ipl < fNz; ipl++)
       printf("     plane %i: z=%11.5f Rmin=%11.5f Rmax=%11.5f\n", ipl, fZ[ipl], fRmin[ipl], fRmax[ipl]);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1100,7 +1105,7 @@ const TBuffer3D &TGeoVGPcon::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t nbPnts, nbSegs, nbPols;

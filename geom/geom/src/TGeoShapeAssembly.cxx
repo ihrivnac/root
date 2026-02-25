@@ -69,7 +69,7 @@ void TGeoShapeAssembly::ComputeBBox()
       return;
    }
    TGeoNode *node;
-   TGeoBBox *box;
+   const TGeoBaseBox *box;
    Double_t xmin, xmax, ymin, ymax, zmin, zmax;
    xmin = ymin = zmin = TGeoShape::Big();
    xmax = ymax = zmax = -TGeoShape::Big();
@@ -80,7 +80,7 @@ void TGeoShapeAssembly::ComputeBBox()
       // Make sure that all assembly daughters have computed their bboxes
       if (node->GetVolume()->IsAssembly())
          node->GetVolume()->GetShape()->ComputeBBox();
-      box = (TGeoBBox *)node->GetVolume()->GetShape();
+      box = node->GetVolume()->GetShape()->GetBoundingBox();
       box->SetBoxPoints(vert);
       for (Int_t ipt = 0; ipt < 8; ipt++) {
          node->LocalToMaster(&vert[3 * ipt], pt);
@@ -133,7 +133,7 @@ void TGeoShapeAssembly::RecomputeBoxLast()
    }
    Double_t vert[24];
    Double_t pt[3];
-   TGeoBBox *box = (TGeoBBox *)node->GetVolume()->GetShape();
+   const TGeoBaseBox *box = node->GetVolume()->GetShape()->GetBoundingBox();
    if (TGeoShape::IsSameWithinTolerance(box->GetDX(), 0) || node->GetVolume()->IsAssembly())
       node->GetVolume()->GetShape()->ComputeBBox();
    box->SetBoxPoints(vert);
@@ -192,7 +192,7 @@ Bool_t TGeoShapeAssembly::Contains(const Double_t *point) const
 {
    if (!fBBoxOK)
       ((TGeoShapeAssembly *)this)->ComputeBBox();
-   if (!TGeoBBox::Contains(point))
+   if (!TGeoBaseBox::Contains(point))
       return kFALSE;
    TGeoVoxelFinder *voxels = fVolume->GetVoxels();
    TGeoNode *node;
@@ -299,8 +299,8 @@ Double_t TGeoShapeAssembly::DistFromOutside(const Double_t *point, const Double_
              fVolume->GetNdaughters());
 #endif
 
-   if (!TGeoBBox::Contains(point)) {
-      snext = TGeoBBox::DistFromOutside(point, dir, 3, stepmax);
+   if (!TGeoBaseBox::Contains(point)) {
+      snext = TGeoBaseBox::DistFromOutside(point, dir, 3, stepmax);
       // Approach bounding box to minimize errors
       snext = TMath::Min(0.01 * snext, 1.E-6);
 #ifdef TGEO_DEBUG
@@ -458,7 +458,7 @@ void TGeoShapeAssembly::InspectShape() const
    printf(" Bounding box:\n");
    if (!fBBoxOK)
       ((TGeoShapeAssembly *)this)->ComputeBBox();
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

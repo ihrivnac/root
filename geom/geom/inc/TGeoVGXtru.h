@@ -98,6 +98,8 @@ public:
    // Function derived TGeoShape/TGeoBBox not present in TGeoVGAdapter
    // (not relevant to navigation)
    void ComputeBBox() override;
+   TGeoVolume *
+   Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndiv, Double_t start, Double_t step) override;
    Bool_t DefinePolygon(Int_t nvert, const Double_t *xv, const Double_t *yv);
    virtual void DefineSection(Int_t snum, Double_t z, Double_t x0 = 0., Double_t y0 = 0., Double_t scale = 1.);
    // Int_t DistancetoPrimitive(Int_t px, Int_t py) override;

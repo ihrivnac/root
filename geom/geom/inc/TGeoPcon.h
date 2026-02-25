@@ -17,9 +17,9 @@
   using TGeoPcon = TGeoVGPcon;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoPcon : public TGeoBBox {
+class TGeoPcon : public TGeoBaseBox {
 protected:
    // data members
    Int_t fNz = 0;             // number of z planes (at least two)
@@ -47,7 +47,7 @@ protected:
 public:
    // constructors
    TGeoPcon();
-   TGeoPcon(const char *name) : TGeoBBox(name, 0, 0, 0) {}
+   TGeoPcon(const char *name) : TGeoBaseBox(name, 0, 0, 0) {}
    TGeoPcon(Double_t phi, Double_t dphi, Int_t nz);
    TGeoPcon(const char *name, Double_t phi, Double_t dphi, Int_t nz);
    TGeoPcon(Double_t *params);

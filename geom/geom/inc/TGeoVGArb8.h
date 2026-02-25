@@ -90,7 +90,7 @@ public:
    Bool_t GetPointsOnFacet(Int_t /*index*/, Int_t /*npoints*/, Double_t * /*array*/) const override;
    Double_t GetDz() const { return fDz; } 
    // Int_t
-   // GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
+   // GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override;
    TGeoShape *GetMakeRuntimeShape(TGeoShape * /*mother*/, TGeoMatrix * /*mat*/) const override { return nullptr; }
    // static void GetPlaneNormal(Double_t *p1, Double_t *p2, Double_t *p3, Double_t *norm);
    Double_t *GetVertices() { return &fXY[0][0]; }
@@ -226,6 +226,8 @@ public:
    // (not relevant to navigation)
    void ComputeBBox() override;
    void ComputeTwist();
+   TGeoVolume *
+   Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndiv, Double_t start, Double_t step) override;
    TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const override;
    void SetDimensions(Double_t *param) override;
    void SavePrimitive(std::ostream &out, Option_t *option = "") override;

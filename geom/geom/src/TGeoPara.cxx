@@ -85,7 +85,7 @@ TGeoPara::TGeoPara()
 /// Default constructor specifying minimum and maximum radius
 
 TGeoPara::TGeoPara(Double_t dx, Double_t dy, Double_t dz, Double_t alpha, Double_t theta, Double_t phi)
-   : TGeoBBox(0, 0, 0)
+   : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoPara);
    fX = dx;
@@ -111,7 +111,7 @@ TGeoPara::TGeoPara(Double_t dx, Double_t dy, Double_t dz, Double_t alpha, Double
 
 TGeoPara::TGeoPara(const char *name, Double_t dx, Double_t dy, Double_t dz, Double_t alpha, Double_t theta,
                    Double_t phi)
-   : TGeoBBox(name, 0, 0, 0)
+   : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoPara);
    fX = dx;
@@ -141,7 +141,7 @@ TGeoPara::TGeoPara(const char *name, Double_t dx, Double_t dy, Double_t dz, Doub
 ///  - param[4] = theta
 ///  - param[5] = phi
 
-TGeoPara::TGeoPara(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoPara::TGeoPara(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoPara);
    SetDimensions(param);
@@ -173,7 +173,7 @@ void TGeoPara::ComputeBBox()
    Double_t dx = fX + fY * TMath::Abs(fTxy) + fZ * TMath::Abs(fTxz);
    Double_t dy = fY + fZ * TMath::Abs(fTyz);
    Double_t dz = fZ;
-   TGeoBBox::SetBoxDimensions(dx, dy, dz);
+   TGeoBaseBox::SetBoxDimensions(dx, dy, dz);
    memset(fOrigin, 0, 3 * sizeof(Double_t));
 }
 
@@ -463,13 +463,13 @@ Double_t TGeoPara::GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const
 
 void TGeoPara::GetBoundingCylinder(Double_t *param) const
 {
-   TGeoBBox::GetBoundingCylinder(param);
+   TGeoBaseBox::GetBoundingCylinder(param);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Fills real parameters of a positioned box inside this. Returns 0 if successful.
 
-Int_t TGeoPara::GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
+Int_t TGeoPara::GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
 {
    dx = dy = dz = 0;
    if (mat->IsRotation()) {
@@ -581,7 +581,7 @@ void TGeoPara::InspectShape() const
    printf("    theta = %11.5f\n", fTheta);
    printf("    phi   = %11.5f\n", fPhi);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -726,7 +726,7 @@ void TGeoPara::SetPoints(Float_t *points) const
 
 void TGeoPara::Sizeof3D() const
 {
-   TGeoBBox::Sizeof3D();
+   TGeoBaseBox::Sizeof3D();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

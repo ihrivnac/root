@@ -155,7 +155,7 @@ TGeoVolume *TGeoBuilder::MakeArb8(const char *name, TGeoMedium *medium, Double_t
 
 TGeoVolume *TGeoBuilder::MakeBox(const char *name, TGeoMedium *medium, Double_t dx, Double_t dy, Double_t dz)
 {
-   TGeoBBox *box = new TGeoBBox(name, dx, dy, dz);
+   TGeoBaseBox *box = new TGeoBaseBox(name, dx, dy, dz);
    TGeoVolume *vol = nullptr;
    if (box->IsRunTimeShape()) {
       vol = fGeometry->MakeVolumeMulti(name, medium);

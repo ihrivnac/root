@@ -57,7 +57,7 @@ are the main components of the geometrical tree. A specific shape can be created
 stand-alone :
 
 ~~~ {.cpp}
-  TGeoBBox *box = new TGeoBBox("s_box", halfX, halfY, halfZ); // named
+  TGeoBaseBox *box = new TGeoBaseBox("s_box", halfX, halfY, halfZ); // named
   TGeoTube *tub = new TGeoTube(rmin, rmax, halfZ);            // no name
   ...  (see each specific shape constructors)
 ~~~

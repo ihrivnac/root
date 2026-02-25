@@ -168,12 +168,17 @@ void TGeoVGTrap::ComputeBBox()
       if (ymax < fXY[i][1])
          ymax = fXY[i][1];
    }
-   fDX = 0.5 * (xmax - xmin);
-   fDY = 0.5 * (ymax - ymin);
-   fDZ = fDz;
-   fOrigin[0] = 0.5 * (xmax + xmin);
-   fOrigin[1] = 0.5 * (ymax + ymin);
-   fOrigin[2] = 0;
+
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = 0.5 * (xmax - xmin);
+   dy = 0.5 * (ymax - ymin);
+   dz = fDz;
+   origin[0] = 0.5 * (xmax + xmin);
+   origin[1] = 0.5 * (ymax + ymin);
+   origin[2] = 0;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
+
    SetShapeBit(kGeoClosedShape);
 }
 

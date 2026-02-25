@@ -529,9 +529,9 @@ TGeoUnion::~TGeoUnion() {}
 
 void TGeoUnion::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Double_t *origin)
 {
-   if (((TGeoBBox *)fLeft)->IsNullBox())
+   if (fLeft->GetBoundingBox()->IsNullBox())
       fLeft->ComputeBBox();
-   if (((TGeoBBox *)fRight)->IsNullBox())
+   if (fRight->GetBoundingBox()->IsNullBox())
       fRight->ComputeBBox();
    Double_t vert[48];
    Double_t pt[3];
@@ -539,8 +539,8 @@ void TGeoUnion::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Double_t *
    Double_t xmin, xmax, ymin, ymax, zmin, zmax;
    xmin = ymin = zmin = TGeoShape::Big();
    xmax = ymax = zmax = -TGeoShape::Big();
-   ((TGeoBBox *)fLeft)->SetBoxPoints(&vert[0]);
-   ((TGeoBBox *)fRight)->SetBoxPoints(&vert[24]);
+   fLeft->GetBoundingBox()->SetBoxPoints(&vert[0]);
+   fRight->GetBoundingBox()->SetBoxPoints(&vert[24]);
    for (i = 0; i < 8; i++) {
       fLeftMat->LocalToMaster(&vert[3 * i], &pt[0]);
       if (pt[0] < xmin)
@@ -928,7 +928,7 @@ TGeoSubtraction::~TGeoSubtraction() {}
 
 void TGeoSubtraction::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Double_t *origin)
 {
-   TGeoBBox *box = (TGeoBBox *)fLeft;
+   const TGeoBaseBox *box = fLeft->GetBoundingBox();
    if (box->IsNullBox())
       fLeft->ComputeBBox();
    Double_t vert[24];
@@ -1252,9 +1252,9 @@ void TGeoIntersection::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Dou
    xmin1 = ymin1 = zmin1 = xmin2 = ymin2 = zmin2 = TGeoShape::Big();
    xmax1 = ymax1 = zmax1 = xmax2 = ymax2 = zmax2 = -TGeoShape::Big();
    if (!hs1) {
-      if (((TGeoBBox *)fLeft)->IsNullBox())
+      if (fLeft->GetBoundingBox()->IsNullBox())
          fLeft->ComputeBBox();
-      ((TGeoBBox *)fLeft)->SetBoxPoints(&vert[0]);
+      fLeft->GetBoundingBox()->SetBoxPoints(&vert[0]);
       for (i = 0; i < 8; i++) {
          fLeftMat->LocalToMaster(&vert[3 * i], &pt[0]);
          if (pt[0] < xmin1)
@@ -1272,9 +1272,9 @@ void TGeoIntersection::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Dou
       }
    }
    if (!hs2) {
-      if (((TGeoBBox *)fRight)->IsNullBox())
+      if (fRight->GetBoundingBox()->IsNullBox())
          fRight->ComputeBBox();
-      ((TGeoBBox *)fRight)->SetBoxPoints(&vert[24]);
+      fRight->GetBoundingBox()->SetBoxPoints(&vert[24]);
       for (i = 8; i < 16; i++) {
          fRightMat->LocalToMaster(&vert[3 * i], &pt[0]);
          if (pt[0] < xmin2)
@@ -1318,6 +1318,8 @@ void TGeoIntersection::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Dou
    TMath::Sort(4, &sort[0], &isort[0], kFALSE);
    if (isort[1] % 2) {
       Warning("ComputeBBox", "shapes %s and %s do not intersect", fLeft->GetName(), fRight->GetName());
+      fLeft->InspectShape();
+      fRight->InspectShape();
       dx = dy = dz = 0;
       memset(origin, 0, 3 * sizeof(Double_t));
       return;
@@ -1331,6 +1333,8 @@ void TGeoIntersection::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Dou
    TMath::Sort(4, &sort[0], &isort[0], kFALSE);
    if (isort[1] % 2) {
       Warning("ComputeBBox", "shapes %s and %s do not intersect", fLeft->GetName(), fRight->GetName());
+      fLeft->InspectShape();
+      fRight->InspectShape();
       dx = dy = dz = 0;
       memset(origin, 0, 3 * sizeof(Double_t));
       return;
@@ -1344,6 +1348,8 @@ void TGeoIntersection::ComputeBBox(Double_t &dx, Double_t &dy, Double_t &dz, Dou
    TMath::Sort(4, &sort[0], &isort[0], kFALSE);
    if (isort[1] % 2) {
       Warning("ComputeBBox", "shapes %s and %s do not intersect", fLeft->GetName(), fRight->GetName());
+      fLeft->InspectShape();
+      fRight->InspectShape();
       dx = dy = dz = 0;
       memset(origin, 0, 3 * sizeof(Double_t));
       return;

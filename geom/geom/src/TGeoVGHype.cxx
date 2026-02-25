@@ -102,8 +102,12 @@ void TGeoVGHype::ComputeBBox()
       return;
    }
 
-   fDX = fDY = TMath::Sqrt(RadiusHypeSq(GetDz(), kFALSE));
-   fDZ = GetDz();
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = dy = TMath::Sqrt(RadiusHypeSq(GetDz(), kFALSE));
+   dz = GetDz();
+   memset(origin, 0, 3 * sizeof(Double_t));
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +198,7 @@ void TGeoVGHype::InspectShape() const
    printf("    dz   = %11.5f\n", GetDz());
 
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -633,7 +637,7 @@ const TBuffer3D &TGeoVGHype::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();

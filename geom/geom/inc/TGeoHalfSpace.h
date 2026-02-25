@@ -12,9 +12,9 @@
 #ifndef ROOT_TGeoHalfSpace
 #define ROOT_TGeoHalfSpace
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoHalfSpace : public TGeoBBox {
+class TGeoHalfSpace : public TGeoBaseBox {
 private:
    Double_t fP[3];
    Double_t fN[3];

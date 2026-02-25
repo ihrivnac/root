@@ -12,12 +12,12 @@
 #ifndef ROOT_TGeoScaledShape
 #define ROOT_TGeoScaledShape
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 class TGeoScale;
 class TGeoShape;
 
-class TGeoScaledShape : public TGeoBBox {
+class TGeoScaledShape : public TGeoBaseBox {
 protected:
    // data members
    TGeoShape *fShape; // pointer to an existing shape

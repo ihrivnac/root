@@ -46,7 +46,7 @@ TGeoHalfSpace::TGeoHalfSpace()
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor with name, point on the plane and normal
 
-TGeoHalfSpace::TGeoHalfSpace(const char *name, Double_t *p, Double_t *n) : TGeoBBox(name, 0, 0, 0)
+TGeoHalfSpace::TGeoHalfSpace(const char *name, Double_t *p, Double_t *n) : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoHalfSpace);
    SetShapeBit(TGeoShape::kGeoInvalidShape);
@@ -59,7 +59,7 @@ TGeoHalfSpace::TGeoHalfSpace(const char *name, Double_t *p, Double_t *n) : TGeoB
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying minimum and maximum radius
 
-TGeoHalfSpace::TGeoHalfSpace(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoHalfSpace::TGeoHalfSpace(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoHalfSpace);
    SetShapeBit(TGeoShape::kGeoInvalidShape);

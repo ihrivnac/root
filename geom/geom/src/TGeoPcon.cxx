@@ -104,7 +104,7 @@ ClassImp(TGeoPcon);
 /// dummy ctor
 
 TGeoPcon::TGeoPcon()
-   : TGeoBBox(),
+   : TGeoBaseBox(),
      fNz(0),
      fPhi1(0.),
      fDphi(0.),
@@ -127,7 +127,7 @@ TGeoPcon::TGeoPcon()
 /// Default constructor
 
 TGeoPcon::TGeoPcon(Double_t phi, Double_t dphi, Int_t nz)
-   : TGeoBBox(0, 0, 0),
+   : TGeoBaseBox(0, 0, 0),
      fNz(nz),
      fPhi1(phi),
      fDphi(dphi),
@@ -170,7 +170,7 @@ TGeoPcon::TGeoPcon(Double_t phi, Double_t dphi, Int_t nz)
 /// Default constructor
 
 TGeoPcon::TGeoPcon(const char *name, Double_t phi, Double_t dphi, Int_t nz)
-   : TGeoBBox(name, 0, 0, 0),
+   : TGeoBaseBox(name, 0, 0, 0),
      fNz(nz),
      fPhi1(phi),
      fDphi(dphi),
@@ -220,7 +220,7 @@ TGeoPcon::TGeoPcon(const char *name, Double_t phi, Double_t dphi, Int_t nz)
 /// ...
 
 TGeoPcon::TGeoPcon(Double_t *param)
-   : TGeoBBox(0, 0, 0),
+   : TGeoBaseBox(0, 0, 0),
      fNz(0),
      fPhi1(0.),
      fDphi(0.),
@@ -644,7 +644,7 @@ TGeoPcon::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
    if ((point[2] > fZ[fNz - 1]) && (dir[2] >= 0))
       return TGeoShape::Big();
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
 
@@ -929,7 +929,7 @@ void TGeoPcon::InspectShape() const
    for (Int_t ipl = 0; ipl < fNz; ipl++)
       printf("     plane %i: z=%11.5f Rmin=%11.5f Rmax=%11.5f\n", ipl, fZ[ipl], fRmin[ipl], fRmax[ipl]);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1577,7 +1577,7 @@ const TBuffer3D &TGeoPcon::GetBuffer3D(Int_t reqSections, Bool_t localFrame) con
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t nbPnts, nbSegs, nbPols;

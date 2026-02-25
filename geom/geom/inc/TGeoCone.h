@@ -18,9 +18,9 @@
   using TGeoConeSeg = TGeoVGConeSeg;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoCone : public TGeoBBox {
+class TGeoCone : public TGeoBaseBox {
 protected:
    // data members
    Double_t fDz;    // half length

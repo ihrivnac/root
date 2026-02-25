@@ -75,7 +75,7 @@ to position further geometrical structures inside or to divide them further more
 
   The primitive shapes supported by the package are basically the GEANT3
 shapes (see class TGeoShape), arbitrary wedges with eight vertices on two parallel
-planes. All basic primitives inherits from class TGeoBBox since the bounding box
+planes. All basic primitives inherits from class TGeoBaseBox since the bounding box
 of a solid is essential for the tracking algorithms. They also implement the
 virtual methods defined in the virtual class TGeoShape (point and segment
 classification). User-defined primitives can be directly plugged into the modeler
@@ -2838,7 +2838,7 @@ Bool_t TGeoManager::IsInPhiRange() const
    const Double_t *origin;
    if (!GetCurrentNavigator() || !GetCurrentNavigator()->GetCurrentNode())
       return kFALSE;
-   origin = ((TGeoBBox *)GetCurrentNavigator()->GetCurrentVolume()->GetShape())->GetOrigin();
+   origin = GetCurrentNavigator()->GetCurrentVolume()->GetShape()->GetBoundingBox()->GetOrigin();
    Double_t point[3];
    LocalToMaster(origin, &point[0]);
    Double_t phi = TMath::ATan2(point[1], point[0]) * TMath::RadToDeg();

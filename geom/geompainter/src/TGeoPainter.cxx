@@ -36,6 +36,7 @@ using TBuffer3D mechanism.
 #include "TPolyMarker3D.h"
 
 #include "TGeoAtt.h"
+#include "TGeoBaseBox.h"
 #include "TGeoVolume.h"
 #include "TGeoNode.h"
 #include "TGeoElement.h"
@@ -356,7 +357,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
    TView *view = gPad->GetView();
    if (!view)
       return big;
-   TGeoBBox *box;
+   const TGeoBaseBox *box;
    fGlobal->Clear();
    TGeoShape::SetTransform(fGlobal);
 
@@ -386,7 +387,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
       dist = crt->GetShape()->DistancetoPrimitive(px, py);
       if (dist < maxdist) {
          gPad->SetSelected(crt);
-         box = (TGeoBBox *)crt->GetShape();
+         box = crt->GetShape()->GetBoundingBox();
          fGlobal->LocalToMaster(box->GetOrigin(), &fCheckedBox[0]);
          fCheckedBox[3] = box->GetDX();
          fCheckedBox[4] = box->GetDY();
@@ -398,7 +399,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
       dist = crt->GetShape()->DistancetoPrimitive(px, py);
       if (dist < maxdist) {
          gPad->SetSelected(crt);
-         box = (TGeoBBox *)crt->GetShape();
+         box = crt->GetShape()->GetBoundingBox();
          fGlobal->LocalToMaster(box->GetOrigin(), &fCheckedBox[0]);
          fCheckedBox[3] = box->GetDX();
          fCheckedBox[4] = box->GetDY();
@@ -413,7 +414,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
          // when the mouse points to the (40x40) right corner of the pad, the manager class is selected
          gPad->SetSelected(fGeoManager);
          fVolInfo = fGeoManager->GetName();
-         box = (TGeoBBox *)volume->GetShape();
+         box = volume->GetShape()->GetBoundingBox();
          memcpy(fCheckedBox, box->GetOrigin(), 3 * sizeof(Double_t));
          fCheckedBox[3] = box->GetDX();
          fCheckedBox[4] = box->GetDY();
@@ -423,7 +424,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
       // when the mouse points to the (40 pix) right edge of the pad, the top volume is selected
       gPad->SetSelected(volume);
       fVolInfo = volume->GetName();
-      box = (TGeoBBox *)volume->GetShape();
+      box = volume->GetShape()->GetBoundingBox();
       memcpy(fCheckedBox, box->GetOrigin(), 3 * sizeof(Double_t));
       fCheckedBox[3] = box->GetDX();
       fCheckedBox[4] = box->GetDY();
@@ -446,7 +447,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
          dist = vol->GetShape()->DistancetoPrimitive(px, py);
          if (dist < maxdist) {
             fVolInfo = fVisBranch;
-            box = (TGeoBBox *)vol->GetShape();
+            box = vol->GetShape()->GetBoundingBox();
             fGeoManager->LocalToMaster(box->GetOrigin(), &fCheckedBox[0]);
             fCheckedNode = gGeoManager->GetCurrentNode();
             if (fGeoManager->IsNodeSelectable())
@@ -471,7 +472,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
       if (dist < maxdist) {
          fVolInfo = vol->GetName();
          gPad->SetSelected(vol);
-         box = (TGeoBBox *)vol->GetShape();
+         box = vol->GetShape()->GetBoundingBox();
          memcpy(fCheckedBox, box->GetOrigin(), 3 * sizeof(Double_t));
          fCheckedBox[3] = box->GetDX();
          fCheckedBox[4] = box->GetDY();
@@ -501,7 +502,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
             dist = vol->GetShape()->DistancetoPrimitive(px, py);
             if (dist < maxdist) {
                next.GetPath(fVolInfo);
-               box = (TGeoBBox *)vol->GetShape();
+               box = vol->GetShape()->GetBoundingBox();
                fGlobal->LocalToMaster(box->GetOrigin(), &fCheckedBox[0]);
                fCheckedNode = daughter;
                if (fGeoManager->IsNodeSelectable())
@@ -527,7 +528,7 @@ Int_t TGeoPainter::DistanceToPrimitiveVol(TGeoVolume *volume, Int_t px, Int_t py
             dist = vol->GetShape()->DistancetoPrimitive(px, py);
             if (dist < maxdist) {
                next.GetPath(fVolInfo);
-               box = (TGeoBBox *)vol->GetShape();
+               box = vol->GetShape()->GetBoundingBox();
                fGlobal->LocalToMaster(box->GetOrigin(), &fCheckedBox[0]);
                fCheckedNode = daughter;
                if (fGeoManager->IsNodeSelectable())
@@ -1212,7 +1213,7 @@ void TGeoPainter::GrabFocus(Int_t nfr, Double_t dlong, Double_t dlat, Double_t d
       return;
    if (!fCheckedNode && !fPaintingOverlaps) {
       printf("Woops!!!\n");
-      TGeoBBox *box = (TGeoBBox *)fGeoManager->GetTopVolume()->GetShape();
+      const TGeoBaseBox *box = fGeoManager->GetTopVolume()->GetShape()->GetBoundingBox();
       memcpy(&fCheckedBox[0], box->GetOrigin(), 3 * sizeof(Double_t));
       fCheckedBox[3] = box->GetDX();
       fCheckedBox[4] = box->GetDY();

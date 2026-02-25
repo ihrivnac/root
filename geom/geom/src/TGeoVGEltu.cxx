@@ -79,9 +79,13 @@ TGeoVGEltu::~TGeoVGEltu() {}
 
 void TGeoVGEltu::ComputeBBox()
 {
-   fDX = Base_t::GetDx();
-   fDY = Base_t::GetDy();
-   fDZ = Base_t::GetDz();
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = Base_t::GetDx();
+   dy = Base_t::GetDy();
+   dz = Base_t::GetDz();
+   memset(origin, 0, 3 * sizeof(Double_t));
+   fBoundingBox.SetBoxDimensions(dx, dy, dz);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +147,7 @@ void TGeoVGEltu::InspectShape() const
    printf("    B    = %11.5f\n", Base_t::GetDy());
    printf("    dz   = %11.5f\n", Base_t::GetDz());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -318,7 +322,7 @@ void TGeoVGEltu::SetPoints(Float_t *points) const
 const TBuffer3D &TGeoVGEltu::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();

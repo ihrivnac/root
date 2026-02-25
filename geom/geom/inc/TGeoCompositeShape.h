@@ -12,14 +12,14 @@
 #ifndef ROOT_TGeoCompositeShape
 #define ROOT_TGeoCompositeShape
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 class TGeoBoolNode;
 
 /// @details A composite shape contains
 /// a list of primitive shapes, the list of corresponding transformations
 /// and a boolean finder handling boolean operations among components.
-class TGeoCompositeShape : public TGeoBBox {
+class TGeoCompositeShape : public TGeoBaseBox {
 private:
    // data members
    TGeoBoolNode *fNode; // top boolean node

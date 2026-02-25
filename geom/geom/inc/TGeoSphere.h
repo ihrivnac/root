@@ -17,9 +17,9 @@
   using TGeoSphere = TGeoVGSphere;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoSphere : public TGeoBBox {
+class TGeoSphere : public TGeoBaseBox {
 protected:
    Int_t fNz;        // number of z planes for drawing
    Int_t fNseg;      // number of segments for drawing

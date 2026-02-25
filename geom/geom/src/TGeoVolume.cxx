@@ -228,7 +228,7 @@ where VNAME is the family name, NMED is the medium number and SHAPE is the
 shape type that can be:
 
 ~~~ {.cpp}
-  box    - for TGeoBBox
+  box    - for TGeoBaseBox
   trd1   - for TGeoTrd1
   trd2   - for TGeoTrd2
   trap   - for TGeoTrap

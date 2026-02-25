@@ -179,7 +179,7 @@ TGeoArb8::TGeoArb8()
 /// Constructor. If the array of vertices is not null, this should be
 /// in the format : (x0, y0, x1, y1, ... , x7, y7)
 
-TGeoArb8::TGeoArb8(Double_t dz, Double_t *vertices) : TGeoBBox(0, 0, 0)
+TGeoArb8::TGeoArb8(Double_t dz, Double_t *vertices) : TGeoBaseBox(0, 0, 0)
 {
    fDz = dz;
    SetShapeBit(kGeoArb8);
@@ -202,7 +202,7 @@ TGeoArb8::TGeoArb8(Double_t dz, Double_t *vertices) : TGeoBBox(0, 0, 0)
 /// Named constructor. If the array of vertices is not null, this should be
 /// in the format : (x0, y0, x1, y1, ... , x7, y7)
 
-TGeoArb8::TGeoArb8(const char *name, Double_t dz, Double_t *vertices) : TGeoBBox(name, 0, 0, 0)
+TGeoArb8::TGeoArb8(const char *name, Double_t dz, Double_t *vertices) : TGeoBaseBox(name, 0, 0, 0)
 {
    fDz = dz;
    SetShapeBit(kGeoArb8);
@@ -690,7 +690,7 @@ Double_t TGeoArb8::DistToPlane(const Double_t *point, const Double_t *dir, Int_t
 Double_t TGeoArb8::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t /*iact*/, Double_t step,
                                    Double_t * /*safe*/) const
 {
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    Double_t snext;
@@ -908,7 +908,7 @@ void TGeoArb8::GetBoundingCylinder(Double_t *param) const
 ////////////////////////////////////////////////////////////////////////////////
 /// Fills real parameters of a positioned box inside this arb8. Returns 0 if successful.
 
-Int_t TGeoArb8::GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
+Int_t TGeoArb8::GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
 {
    dx = dy = dz = 0;
    if (mat->IsRotation()) {
@@ -1081,7 +1081,7 @@ void TGeoArb8::InspectShape() const
       printf("    point #%i : x=%11.5f y=%11.5f z=%11.5f\n", ip, fXY[ip][0], fXY[ip][1], fDz * ((ip < 4) ? -1 : 1));
    }
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1097,8 +1097,8 @@ Double_t TGeoArb8::Safety(const Double_t *point, Bool_t in) const
    Double_t lsq, ssq, dx, dy, dpx, dpy, u;
    if (IsTwisted()) {
       if (!in) {
-         if (!TGeoBBox::Contains(point))
-            return TGeoBBox::Safety(point, kFALSE);
+         if (!TGeoBaseBox::Contains(point))
+            return TGeoBaseBox::Safety(point, kFALSE);
       }
       // Point is also in the bounding box ;-(
       // Compute closest distance to any segment
@@ -1317,7 +1317,7 @@ void TGeoArb8::SetVertex(Int_t vnum, Double_t x, Double_t y)
 
 void TGeoArb8::Sizeof3D() const
 {
-   TGeoBBox::Sizeof3D();
+   TGeoBaseBox::Sizeof3D();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1586,7 +1586,7 @@ TGeoTrap::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    // compute distance to get outside this shape

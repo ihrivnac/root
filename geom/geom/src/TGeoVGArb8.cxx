@@ -134,12 +134,17 @@ void TGeoVGArb8::ComputeBBox()
       if (ymax < fXY[i][1])
          ymax = fXY[i][1];
    }
-   fDX = 0.5 * (xmax - xmin);
-   fDY = 0.5 * (ymax - ymin);
-   fDZ = fDz;
-   fOrigin[0] = 0.5 * (xmax + xmin);
-   fOrigin[1] = 0.5 * (ymax + ymin);
-   fOrigin[2] = 0;
+ 
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = 0.5 * (xmax - xmin);
+   dy = 0.5 * (ymax - ymin);
+   dz = fDz;
+   origin[0] = 0.5 * (xmax + xmin);
+   origin[1] = 0.5 * (ymax + ymin);
+   origin[2] = 0;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
+
    SetShapeBit(kGeoClosedShape);
 }
 
@@ -365,7 +370,7 @@ void TGeoVGArb8::InspectShape() const
       printf("    point #%i : x=%11.5f y=%11.5f z=%11.5f\n", ip, fXY[ip][0], fXY[ip][1], fDz * ((ip < 4) ? -1 : 1));
    }
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -482,7 +487,7 @@ void TGeoVGArb8::SetVertex(Int_t vnum, Double_t x, Double_t y)
 
 void TGeoVGArb8::Sizeof3D() const
 {
-   TGeoBBox::Sizeof3D();
+   fBoundingBox.Sizeof3D();
 }
 
 #endif

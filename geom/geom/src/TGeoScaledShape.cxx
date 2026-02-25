@@ -41,7 +41,7 @@ TGeoScaledShape::TGeoScaledShape()
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor
 
-TGeoScaledShape::TGeoScaledShape(const char *name, TGeoShape *shape, TGeoScale *scale) : TGeoBBox(name, 0, 0, 0)
+TGeoScaledShape::TGeoScaledShape(const char *name, TGeoShape *shape, TGeoScale *scale) : TGeoBaseBox(name, 0, 0, 0)
 {
    fShape = shape;
    fScale = scale;
@@ -89,7 +89,7 @@ void TGeoScaledShape::ComputeBBox()
    }
    if (fShape->IsAssembly())
       fShape->ComputeBBox();
-   TGeoBBox *box = (TGeoBBox *)fShape;
+   const TGeoBaseBox *box = fShape->GetBoundingBox();
    const Double_t *orig = box->GetOrigin();
    Double_t point[3], master[3];
    point[0] = box->GetDX();
@@ -198,7 +198,7 @@ const TBuffer3D &TGeoScaledShape::GetBuffer3D(Int_t reqSections, Bool_t localFra
    TBuffer3D &buffer = (TBuffer3D &)fShape->GetBuffer3D(reqSections, localFrame);
    buffer.fScaled = kTRUE;
 
-   //   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   //   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
    Double_t halfLengths[3] = {fDX, fDY, fDZ};
    buffer.SetAABoundingBox(fOrigin, halfLengths);
    if (!buffer.fLocalFrame) {
@@ -240,7 +240,7 @@ void TGeoScaledShape::InspectShape() const
    printf("*** Shape %s: TGeoScaledShape ***\n", GetName());
    fScale->Print();
    fShape->InspectShape();
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

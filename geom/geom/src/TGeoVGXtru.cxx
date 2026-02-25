@@ -240,12 +240,26 @@ void TGeoVGXtru::ComputeBBox()
             ymax = td.fYc[j];
       }
    }
-   fOrigin[0] = 0.5 * (xmin + xmax);
-   fOrigin[1] = 0.5 * (ymin + ymax);
-   fOrigin[2] = 0.5 * (zmin + zmax);
-   fDX = 0.5 * (xmax - xmin);
-   fDY = 0.5 * (ymax - ymin);
-   fDZ = 0.5 * (zmax - zmin);
+
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = 0.5 * (xmax - xmin);
+   dy = 0.5 * (ymax - ymin);
+   dz = 0.5 * (zmax - zmin);
+   origin[0] = 0.5 * (xmin + xmax);
+   origin[1] = 0.5 * (ymin + ymax);
+   origin[2] = 0.5 * (zmin + zmax);
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Divide this shape along one axis.
+
+TGeoVolume *TGeoVGXtru::Divide(TGeoVolume *voldiv, const char * /*divname*/, Int_t /*iaxis*/, Int_t /*ndiv*/,
+                             Double_t /*start*/, Double_t /*step*/)
+{
+   Error("Divide", "Division of a general trapezoid not implemented");
+   return voldiv;
 }
 
 // ////////////////////////////////////////////////////////////////////////////////
@@ -376,7 +390,7 @@ void TGeoVGXtru::InspectShape() const
       printf("     plane %i: z=%11.5f x0=%11.5f y0=%11.5f scale=%11.5f\n", ipl, fZ[ipl], fX0[ipl], fY0[ipl],
              fScale[ipl]);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -649,7 +663,7 @@ const TBuffer3D &TGeoVGXtru::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t nz = GetNz();

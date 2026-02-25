@@ -103,9 +103,13 @@ TGeoVGCone::~TGeoVGCone() {}
 
 void TGeoVGCone::ComputeBBox()
 {
-   TGeoBBox *box = (TGeoBBox *)this;
-   box->SetBoxDimensions(TMath::Max(GetRmax1(), GetRmax2()), TMath::Max(GetRmax1(), GetRmax2()), GetDz());
-   memset(fOrigin, 0, 3 * sizeof(Double_t));
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = TMath::Max(GetRmax1(), GetRmax2());
+   dy = TMath::Max(GetRmax1(), GetRmax2());
+   dz = GetDz();
+   memset(origin, 0, 3 * sizeof(Double_t));
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -639,7 +643,7 @@ void TGeoVGCone::InspectShape() const
    printf("    Rmin2 = %11.5f\n", GetRmin2());
    printf("    Rmax2 = %11.5f\n", GetRmax2());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -999,7 +1003,7 @@ const TBuffer3D &TGeoVGCone::GetBuffer3D(Int_t reqSections, Bool_t localFrame) c
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();

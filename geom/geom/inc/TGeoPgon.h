@@ -100,7 +100,7 @@ public:
    Int_t GetNsegments() const override { return fNedges; }
    Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override
    {
-      return TGeoBBox::GetPointsOnSegments(npoints, array);
+      return TGeoBaseBox::GetPointsOnSegments(npoints, array);
    }
    void InspectShape() const override;
    TBuffer3D *MakeBuffer3D() const override;

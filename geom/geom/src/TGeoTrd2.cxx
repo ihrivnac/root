@@ -61,7 +61,7 @@ TGeoTrd2::TGeoTrd2()
 ////////////////////////////////////////////////////////////////////////////////
 /// constructor.
 
-TGeoTrd2::TGeoTrd2(Double_t dx1, Double_t dx2, Double_t dy1, Double_t dy2, Double_t dz) : TGeoBBox(0, 0, 0)
+TGeoTrd2::TGeoTrd2(Double_t dx1, Double_t dx2, Double_t dy1, Double_t dy2, Double_t dz) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(kGeoTrd2);
    fDx1 = dx1;
@@ -80,7 +80,7 @@ TGeoTrd2::TGeoTrd2(Double_t dx1, Double_t dx2, Double_t dy1, Double_t dy2, Doubl
 /// constructor.
 
 TGeoTrd2::TGeoTrd2(const char *name, Double_t dx1, Double_t dx2, Double_t dy1, Double_t dy2, Double_t dz)
-   : TGeoBBox(name, 0, 0, 0)
+   : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(kGeoTrd2);
    fDx1 = dx1;
@@ -103,7 +103,7 @@ TGeoTrd2::TGeoTrd2(const char *name, Double_t dx1, Double_t dx2, Double_t dy1, D
 ///  - param[3] = dy2
 ///  - param[4] = dz
 
-TGeoTrd2::TGeoTrd2(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoTrd2::TGeoTrd2(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(kGeoTrd2);
    SetDimensions(param);
@@ -560,13 +560,13 @@ TGeoTrd2::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t ndi
 
 void TGeoTrd2::GetBoundingCylinder(Double_t *param) const
 {
-   TGeoBBox::GetBoundingCylinder(param);
+   TGeoBaseBox::GetBoundingCylinder(param);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Fills real parameters of a positioned box inside this. Returns 0 if successful.
 
-Int_t TGeoTrd2::GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
+Int_t TGeoTrd2::GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
 {
    dx = dy = dz = 0;
    if (mat->IsRotation()) {
@@ -669,7 +669,7 @@ void TGeoTrd2::InspectShape() const
    printf("    dy2 = %11.5f\n", fDy2);
    printf("    dz  = %11.5f\n", fDz);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -837,7 +837,7 @@ void TGeoTrd2::SetVertex(Double_t *vertex) const
 
 void TGeoTrd2::Sizeof3D() const
 {
-   TGeoBBox::Sizeof3D();
+   TGeoBaseBox::Sizeof3D();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

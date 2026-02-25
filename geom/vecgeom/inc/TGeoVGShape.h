@@ -73,7 +73,7 @@ public:
       return (fShape->GetPointsOnSegments(npoints, array));
    }
    Int_t
-   GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override
+   GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override
    {
       return (fShape->GetFittingBox(parambox, mat, dx, dy, dz));
    }

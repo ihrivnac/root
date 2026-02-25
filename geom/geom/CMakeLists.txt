@@ -14,6 +14,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoArb8.h
     TGeoAtt.h
     TGeoBBox.h
+    TGeoBaseBox.h
     TGeoBoolNode.h
     TGeoBranchArray.h
     TGeoBuilder.h
@@ -83,6 +84,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TGeoArb8.cxx
     src/TGeoAtt.cxx
     src/TGeoBBox.cxx
+    src/TGeoBaseBox.cxx
     src/TGeoBoolNode.cxx
     src/TGeoBranchArray.cxx
     src/TGeoBuilder.cxx

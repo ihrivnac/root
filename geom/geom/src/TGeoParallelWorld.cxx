@@ -31,7 +31,7 @@ method.
 #include "TGeoMatrix.h"
 #include "TGeoPhysicalNode.h"
 #include "TGeoNavigator.h"
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 #include "TGeoVoxelGrid.h"
 #include "TStopwatch.h"
 #include <iostream>
@@ -1340,7 +1340,7 @@ void TGeoParallelWorld::BuildBVH()
       Double_t vert[24] = {0};
       Double_t pt[3] = {0};
       Double_t xyz[6] = {0};
-      TGeoBBox *box = (TGeoBBox *)node->GetVolume()->GetShape();
+      const TGeoBaseBox *box = node->GetVolume()->GetShape()->GetBoundingBox();
       box->SetBoxPoints(&vert[0]);
       for (Int_t point = 0; point < 8; point++) {
          DaughterToMother(node, &vert[3 * point], &pt[0]);

@@ -76,7 +76,7 @@ TGeoParaboloid::TGeoParaboloid()
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying X and Y semiaxis length
 
-TGeoParaboloid::TGeoParaboloid(Double_t rlo, Double_t rhi, Double_t dz) : TGeoBBox(0, 0, 0)
+TGeoParaboloid::TGeoParaboloid(Double_t rlo, Double_t rhi, Double_t dz) : TGeoBaseBox(0, 0, 0)
 {
    fRlo = 0;
    fRhi = 0;
@@ -91,7 +91,7 @@ TGeoParaboloid::TGeoParaboloid(Double_t rlo, Double_t rhi, Double_t dz) : TGeoBB
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying X and Y semiaxis length
 
-TGeoParaboloid::TGeoParaboloid(const char *name, Double_t rlo, Double_t rhi, Double_t dz) : TGeoBBox(name, 0, 0, 0)
+TGeoParaboloid::TGeoParaboloid(const char *name, Double_t rlo, Double_t rhi, Double_t dz) : TGeoBaseBox(name, 0, 0, 0)
 {
    fRlo = 0;
    fRhi = 0;
@@ -356,7 +356,7 @@ void TGeoParaboloid::InspectShape() const
    printf("    rhi    = %11.5f\n", fRhi);
    printf("    dz     = %11.5f\n", fDz);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -678,7 +678,7 @@ void TGeoParaboloid::Sizeof3D() const {}
 const TBuffer3D &TGeoParaboloid::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();

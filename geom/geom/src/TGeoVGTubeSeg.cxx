@@ -146,12 +146,16 @@ void TGeoVGTubeSeg::ComputeBBox()
       ddp -= 360;
    if (ddp <= dp)
       ymin = -rmax();
-   fOrigin[0] = (xmax + xmin) / 2;
-   fOrigin[1] = (ymax + ymin) / 2;
-   fOrigin[2] = 0;
-   fDX = (xmax - xmin) / 2;
-   fDY = (ymax - ymin) / 2;
-   fDZ = z();
+
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = (xmax - xmin) / 2;
+   dy = (ymax - ymin) / 2;
+   dz = z();
+   origin[0] = (xmax + xmin) / 2;
+   origin[1] = (ymax + ymin) / 2;
+   origin[2] = 0;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
 }
 
 
@@ -686,7 +690,7 @@ void TGeoVGTubeSeg::InspectShape() const
    printf("    phi1 = %11.5f\n", sphi()* TMath::RadToDeg());
    printf("    phi2 = %11.5f\n", (sphi() + dphi()) * TMath::RadToDeg());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1099,7 +1103,7 @@ void TGeoVGTubeSeg::Sizeof3D() const {}
 const TBuffer3D &TGeoVGTubeSeg::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3DTubeSeg buffer;
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       // These from TBuffer3DTube / TGeoTube

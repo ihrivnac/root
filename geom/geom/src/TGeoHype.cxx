@@ -304,7 +304,7 @@ TGeoHype::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    // find distance to shape
@@ -506,7 +506,7 @@ void TGeoHype::InspectShape() const
    printf("    dz   = %11.5f\n", fDz);
 
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1023,7 +1023,7 @@ const TBuffer3D &TGeoHype::GetBuffer3D(Int_t reqSections, Bool_t localFrame) con
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();

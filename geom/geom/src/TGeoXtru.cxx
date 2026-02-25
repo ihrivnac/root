@@ -190,7 +190,7 @@ void TGeoXtru::SetSeg(Int_t iseg)
 /// dummy ctor
 
 TGeoXtru::TGeoXtru()
-   : TGeoBBox(),
+   : TGeoBaseBox(),
      fNvert(0),
      fNz(0),
      fZcurrent(0.),
@@ -210,7 +210,7 @@ TGeoXtru::TGeoXtru()
 /// Default constructor
 
 TGeoXtru::TGeoXtru(Int_t nz)
-   : TGeoBBox(0, 0, 0),
+   : TGeoBaseBox(0, 0, 0),
      fNvert(0),
      fNz(nz),
      fZcurrent(0.),
@@ -246,7 +246,7 @@ TGeoXtru::TGeoXtru(Int_t nz)
 ///  - param[4*(nz-1)+4] = scalen
 
 TGeoXtru::TGeoXtru(Double_t *param)
-   : TGeoBBox(0, 0, 0),
+   : TGeoBaseBox(0, 0, 0),
      fNvert(0),
      fNz(0),
      fZcurrent(0.),
@@ -638,7 +638,7 @@ TGeoXtru::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    Double_t stepmax = step;
@@ -687,8 +687,8 @@ TGeoXtru::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
       }
    }
    // Check if the bounding box is missed by the track
-   if (!TGeoBBox::Contains(pt)) {
-      Double_t dist = TGeoBBox::DistFromOutside(pt, dir, 3);
+   if (!TGeoBaseBox::Contains(pt)) {
+      Double_t dist = TGeoBaseBox::DistFromOutside(pt, dir, 3);
       if (dist > stepmax)
          return TGeoShape::Big();
       if (dist > 1E-6)
@@ -951,7 +951,7 @@ void TGeoXtru::InspectShape() const
       printf("     plane %i: z=%11.5f x0=%11.5f y0=%11.5f scale=%11.5f\n", ipl, fZ[ipl], fX0[ipl], fY0[ipl],
              fScale[ipl]);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1136,8 +1136,8 @@ Double_t TGeoXtru::Safety(const Double_t *point, Bool_t in) const
       return safmin;
    }
    // Accurate safety is expensive, use the bounding box
-   if (!TGeoBBox::Contains(point))
-      return TGeoBBox::Safety(point, in);
+   if (!TGeoBaseBox::Contains(point))
+      return TGeoBaseBox::Safety(point, in);
    iz = TMath::BinarySearch(fNz, fZ, point[2]);
    if (iz < 0) {
       iz = 0;
@@ -1348,7 +1348,7 @@ const TBuffer3D &TGeoXtru::GetBuffer3D(Int_t reqSections, Bool_t localFrame) con
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t nz = GetNz();

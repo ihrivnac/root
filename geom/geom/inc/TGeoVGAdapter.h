@@ -11,7 +11,8 @@
 
 // #if defined(ROOT_USE_VECGEOM_SOLIDS)
 
-#include "TGeoBBox.h"
+#include "TGeoShape.h"
+#include "TGeoBaseBox.h"
 
 #include <VecGeom/base/Global.h>
 #include <VecGeom/base/Vector3D.h>
@@ -64,7 +65,12 @@ namespace vecgeom {
 // }
 
 template <class UnplacedVolume_t>
-class TGeoVGAdapter : public TGeoBBox, protected UnplacedVolume_t {
+class TGeoVGAdapter : public TGeoShape, protected UnplacedVolume_t 
+{
+protected:
+     // Bounding box
+     TGeoBaseBox fBoundingBox; // bounding box
+
 public:
     using U3Vector = vecgeom::Vector3D<Double_t>;
 
@@ -106,8 +112,7 @@ public:
 
     // Overriding functions (from TGeoBBox::TGeoShape)
     //
-   // Double_t Capacity() const override; Not needed as done via UnplacedVolume_t
-   // void ComputeBBox() override;  Not needed as done via TGeoBBox
+   Double_t Capacity() const override;
    void ComputeNormal(const Double_t *point, const Double_t *dir, Double_t *norm) const override;
    Bool_t Contains(const Double_t *point) const override;
    // Bool_t CouldBeCrossed(const Double_t *point, const Double_t *dir) const override
@@ -130,6 +135,33 @@ public:
    void DistFromOutside_v(const Double_t *points, const Double_t *dirs, Double_t *dists, Int_t vecsize,
                           Double_t *step) const override;
    void Safety_v(const Double_t *points, const Bool_t *inside, Double_t *safe, Int_t vecsize) const override;
+   Bool_t IsVecGeom() const override { return kTRUE; }
+
+   // Bounding box functions
+   const TGeoBaseBox* GetBoundingBox() const override { return &fBoundingBox; }
+   virtual Double_t GetDX() const { return fBoundingBox.GetDX(); }
+   virtual Double_t GetDY() const { return fBoundingBox.GetDY(); }
+   virtual Double_t GetDZ() const { return fBoundingBox.GetDZ(); }
+   void SetBoxDimensions(Double_t dx, Double_t dy, Double_t dz, Double_t *origin = nullptr) { fBoundingBox.SetBoxDimensions(dx, dy, dz, origin); }
+   void SetDimensions(Double_t *param) override { fBoundingBox.SetDimensions(param); }
+
+   void ComputeBBox() override {fBoundingBox.ComputeBBox(); }
+   Bool_t CouldBeCrossed(const Double_t *point, const Double_t *dir) const override { return fBoundingBox.CouldBeCrossed(point, dir); }
+   Int_t DistancetoPrimitive(Int_t px, Int_t py) override { return fBoundingBox.DistancetoPrimitive(px, py); }
+   const char *GetAxisName(Int_t iaxis) const override  { return fBoundingBox.GetAxisName(iaxis); }
+   Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const override { return fBoundingBox.GetAxisRange(iaxis, xlo, xhi); }
+   void GetBoundingCylinder(Double_t *param) const override { fBoundingBox.GetBoundingCylinder(param); }
+   Int_t GetByteCount() const override { return fBoundingBox.GetByteCount(); }
+   virtual Bool_t GetPointsOnFacet(Int_t index, Int_t npoints, Double_t *array) const { return fBoundingBox.GetPointsOnFacet(index, npoints, array); }
+   Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override  { return fBoundingBox.GetPointsOnSegments(npoints, array); }
+   Int_t
+   GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override { return fBoundingBox.GetFittingBox(parambox, mat, dx, dy, dz); }
+   Bool_t IsCylType() const override { return fBoundingBox.IsCylType(); }
+   Bool_t IsValidBox() const override { return fBoundingBox.IsValidBox(); }
+   void SetPoints(Double_t *points) const override { return fBoundingBox.SetPoints(points); }
+   void SetPoints(Float_t *points) const override { return fBoundingBox.SetPoints(points); }
+   void SetSegsAndPols(TBuffer3D &buffer) const override { fBoundingBox.SetSegsAndPols(buffer); }
+   void Sizeof3D() const override { fBoundingBox.Sizeof3D(); }
 
     // VecGeom overridden methods ---------------------------------------------
 
@@ -172,10 +204,12 @@ public:
    }
 
 protected:
+   using UnplacedVolume_t::Capacity;
    using UnplacedVolume_t::Contains;
    using UnplacedVolume_t::DistanceToOut;
    using UnplacedVolume_t::DistanceToIn;
-   using TGeoBBox::Inside;
+   using UnplacedVolume_t::Inside;
+   using TGeoShape::Inside;
 
    ClassDefOverride(TGeoVGAdapter, 1) // Adapter for a VecGeom shape
 };

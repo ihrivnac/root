@@ -302,7 +302,7 @@ TGeoEltu::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
    }
 
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    Double_t u = dir[0] * dir[0] * b2 + dir[1] * dir[1] * a2; // positive
@@ -391,7 +391,7 @@ void TGeoEltu::InspectShape() const
    printf("    B    = %11.5f\n", fRmax);
    printf("    dz   = %11.5f\n", fDz);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -601,7 +601,7 @@ void TGeoEltu::SetPoints(Float_t *points) const
 const TBuffer3D &TGeoEltu::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();

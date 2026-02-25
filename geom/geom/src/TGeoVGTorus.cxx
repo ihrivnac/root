@@ -84,9 +84,15 @@ TGeoVGTorus::TGeoVGTorus(Double_t *param)
 
 void TGeoVGTorus::ComputeBBox()
 {
-   fDZ = rmax();   
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dz = rmax();   
    if (TGeoShape::IsSameWithinTolerance(dphi() * TMath::RadToDeg(), 360)) {
-      fDX = fDY = rtor() + rmax();
+      dx = dy = rtor() + rmax();
+      origin[0] = 0.;
+      origin[1] = 0.;
+      origin[2] = 0;
+      fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
       return;
    }
    Double_t xc[4];
@@ -130,11 +136,13 @@ void TGeoVGTorus::ComputeBBox()
       ddp -= 360;
    if (ddp <= (dphi() * TMath::RadToDeg()))
       ymin = -(rtor() + rmax());
-   fOrigin[0] = (xmax + xmin) / 2;
-   fOrigin[1] = (ymax + ymin) / 2;
-   fOrigin[2] = 0;
-   fDX = (xmax - xmin) / 2;
-   fDY = (ymax - ymin) / 2;
+
+   dx = (xmax - xmin) / 2;
+   dy = (ymax - ymin) / 2;
+   origin[0] = (xmax + xmin) / 2;
+   origin[1] = (ymax + ymin) / 2;
+   origin[2] = 0;
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
 }
 
 
@@ -273,7 +281,7 @@ void TGeoVGTorus::InspectShape() const
    printf("    Phi1 = %11.5f\n", sphi() * TMath::RadToDeg());
    printf("    Dphi = %11.5f\n", dphi() * TMath::RadToDeg());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -935,7 +943,7 @@ const TBuffer3D &TGeoVGTorus::GetBuffer3D(Int_t reqSections, Bool_t localFrame) 
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments() + 1;

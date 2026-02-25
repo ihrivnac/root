@@ -138,7 +138,7 @@ public:
    Int_t GetNmeshVertices() const override;
    Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override
    {
-      return TGeoBBox::GetPointsOnSegments(npoints, array);
+      return fBoundingBox.GetPointsOnSegments(npoints, array);
    }
    void InspectShape() const override;
    TBuffer3D *MakeBuffer3D() const override;

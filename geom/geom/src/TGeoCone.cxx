@@ -113,7 +113,7 @@ TGeoCone::TGeoCone()
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying minimum and maximum radius
 
-TGeoCone::TGeoCone(Double_t dz, Double_t rmin1, Double_t rmax1, Double_t rmin2, Double_t rmax2) : TGeoBBox(0, 0, 0)
+TGeoCone::TGeoCone(Double_t dz, Double_t rmin1, Double_t rmax1, Double_t rmin2, Double_t rmax2) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoCone);
    SetConeDimensions(dz, rmin1, rmax1, rmin2, rmax2);
@@ -127,7 +127,7 @@ TGeoCone::TGeoCone(Double_t dz, Double_t rmin1, Double_t rmax1, Double_t rmin2, 
 /// Default constructor specifying minimum and maximum radius
 
 TGeoCone::TGeoCone(const char *name, Double_t dz, Double_t rmin1, Double_t rmax1, Double_t rmin2, Double_t rmax2)
-   : TGeoBBox(name, 0, 0, 0)
+   : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoCone);
    SetConeDimensions(dz, rmin1, rmax1, rmin2, rmax2);
@@ -145,7 +145,7 @@ TGeoCone::TGeoCone(const char *name, Double_t dz, Double_t rmin1, Double_t rmax1
 ///  - param[3] = Rmin2
 ///  - param[4] = Rmax2
 
-TGeoCone::TGeoCone(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoCone::TGeoCone(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoCone);
    SetDimensions(param);
@@ -183,7 +183,7 @@ TGeoCone::~TGeoCone() {}
 
 void TGeoCone::ComputeBBox()
 {
-   TGeoBBox *box = (TGeoBBox *)this;
+   TGeoBaseBox *box = GetBoundingBox();
    box->SetBoxDimensions(TMath::Max(fRmax1, fRmax2), TMath::Max(fRmax1, fRmax2), fDz);
    memset(fOrigin, 0, 3 * sizeof(Double_t));
 }
@@ -554,7 +554,7 @@ TGeoCone::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    // compute distance to Z planes
@@ -817,7 +817,7 @@ void TGeoCone::InspectShape() const
    printf("    Rmin2 = %11.5f\n", fRmin2);
    printf("    Rmax2 = %11.5f\n", fRmax2);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1178,7 +1178,7 @@ const TBuffer3D &TGeoCone::GetBuffer3D(Int_t reqSections, Bool_t localFrame) con
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments();
@@ -2052,7 +2052,7 @@ Double_t TGeoConeSeg::DistFromOutside(const Double_t *point, const Double_t *dir
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    if ((fPhi2 - fPhi1) >= 360.)
@@ -2220,7 +2220,7 @@ void TGeoConeSeg::InspectShape() const
    printf("    phi1  = %11.5f\n", fPhi1);
    printf("    phi2  = %11.5f\n", fPhi2);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2542,7 +2542,7 @@ const TBuffer3D &TGeoConeSeg::GetBuffer3D(Int_t reqSections, Bool_t localFrame) 
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments() + 1;

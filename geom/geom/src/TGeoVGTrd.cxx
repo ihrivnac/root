@@ -119,10 +119,13 @@ TGeoVGTrd::~TGeoVGTrd() {}
 
 void TGeoVGTrd::ComputeBBox()
 {
-   fDX = TMath::Max(dx1(), dx2());
-   fDY = TMath::Max(dy1(), dy2());
-   fDZ = dz();
-   memset(fOrigin, 0, 3 * sizeof(Double_t));
+   Double_t dx, dy, dz;
+   Double_t origin[3];
+   dx = TMath::Max(dx1(), dx2());
+   dy = TMath::Max(dy1(), dy2());
+   dz = Base_t::dz();
+   memset(origin, 0, 3 * sizeof(Double_t));
+   fBoundingBox.SetBoxDimensions(dx, dy, dz, origin);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -292,7 +295,7 @@ TGeoVGTrd::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t nd
 
 void TGeoVGTrd::GetBoundingCylinder(Double_t *param) const
 {
-   TGeoBBox::GetBoundingCylinder(param);
+   fBoundingBox.GetBoundingCylinder(param);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -311,7 +314,7 @@ Double_t TGeoVGTrd::GetDy() const
 ////////////////////////////////////////////////////////////////////////////////
 /// Fills real parameters of a positioned box inside this. Returns 0 if successful.
 
-Int_t TGeoVGTrd::GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
+Int_t TGeoVGTrd::GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const
 {
    dx = dy = dz = 0;
    if (mat->IsRotation()) {
@@ -414,7 +417,7 @@ void TGeoVGTrd::InspectShape() const
    printf("    dy2 = %11.5f\n", dy2());
    printf("    dz  = %11.5f\n", dz());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -547,7 +550,7 @@ void TGeoVGTrd::SetVertex(Double_t *vertex) const
 
 void TGeoVGTrd::Sizeof3D() const
 {
-   TGeoBBox::Sizeof3D();
+   fBoundingBox.Sizeof3D();
 }
 
 #endif

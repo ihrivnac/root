@@ -12,11 +12,11 @@
 #ifndef ROOT_TGeoShapeAssembly
 #define ROOT_TGeoShapeAssembly
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 class TGeoVolumeAssembly;
 
-class TGeoShapeAssembly : public TGeoBBox {
+class TGeoShapeAssembly : public TGeoBaseBox {
 protected:
    // data members
    TGeoVolumeAssembly *fVolume; // assembly volume

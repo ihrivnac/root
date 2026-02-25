@@ -1195,7 +1195,7 @@ TGeoPgon::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big(); // safety mode
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    // Protection for points on last Z sections
@@ -2248,7 +2248,7 @@ const TBuffer3D &TGeoPgon::GetBuffer3D(Int_t reqSections, Bool_t localFrame) con
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t nbPnts, nbSegs, nbPols;

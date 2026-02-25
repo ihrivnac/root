@@ -79,7 +79,7 @@ TGeoTorus::TGeoTorus()
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor without name.
 
-TGeoTorus::TGeoTorus(Double_t r, Double_t rmin, Double_t rmax, Double_t phi1, Double_t dphi) : TGeoBBox(0, 0, 0)
+TGeoTorus::TGeoTorus(Double_t r, Double_t rmin, Double_t rmax, Double_t phi1, Double_t dphi) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoTorus);
    SetTorusDimensions(r, rmin, rmax, phi1, dphi);
@@ -92,7 +92,7 @@ TGeoTorus::TGeoTorus(Double_t r, Double_t rmin, Double_t rmax, Double_t phi1, Do
 /// Constructor with name.
 
 TGeoTorus::TGeoTorus(const char *name, Double_t r, Double_t rmin, Double_t rmax, Double_t phi1, Double_t dphi)
-   : TGeoBBox(name, 0, 0, 0)
+   : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoTorus);
    SetTorusDimensions(r, rmin, rmax, phi1, dphi);
@@ -109,7 +109,7 @@ TGeoTorus::TGeoTorus(const char *name, Double_t r, Double_t rmin, Double_t rmax,
 ///  - param[3] = Phi1
 ///  - param[4] = Dphi
 
-TGeoTorus::TGeoTorus(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoTorus::TGeoTorus(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoTorus);
    SetDimensions(param);
@@ -378,7 +378,7 @@ TGeoTorus::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iac
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    Double_t daxis;
@@ -588,7 +588,7 @@ void TGeoTorus::InspectShape() const
    printf("    Phi1 = %11.5f\n", fPhi1);
    printf("    Dphi = %11.5f\n", fDphi);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1264,7 +1264,7 @@ const TBuffer3D &TGeoTorus::GetBuffer3D(Int_t reqSections, Bool_t localFrame) co
 {
    static TBuffer3D buffer(TBuffer3DTypes::kGeneric);
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kRawSizes) {
       Int_t n = gGeoManager->GetNsegments() + 1;

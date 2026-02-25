@@ -26,7 +26,7 @@ Full description with examples and pictures
 #include "TBuffer.h"
 #include "TMath.h"
 #include "TGeoMatrix.h"
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 #include "TGeoNode.h"
 #include "TGeoManager.h"
 #include "TGeoStateInfo.h"
@@ -203,11 +203,11 @@ void TGeoVoxelFinder::BuildVoxelLimits()
    Double_t pt[3] = {0};
    Double_t xyz[6] = {0};
    //   printf("boundaries for %s :\n", GetName());
-   TGeoBBox *box = nullptr;
+   const TGeoBaseBox *box = nullptr;
    for (id = 0; id < nd; id++) {
       node = fVolume->GetNode(id);
       //      if (!strcmp(node->ClassName(), "TGeoNodeOffset") continue;
-      box = (TGeoBBox *)node->GetVolume()->GetShape();
+      box = node->GetVolume()->GetShape()->GetBoundingBox();
       box->SetBoxPoints(&vert[0]);
       for (Int_t point = 0; point < 8; point++) {
          DaughterToMother(id, &vert[3 * point], &pt[0]);
@@ -1205,7 +1205,7 @@ void TGeoVoxelFinder::SortCrossedVoxels(const Double_t *point, const Double_t *d
       td.fVoxInvdir[i] = 1. / dir[i];
    }
    Bool_t flag = GetIndices(point, td);
-   TGeoBBox *box = (TGeoBBox *)(fVolume->GetShape());
+   const TGeoBaseBox *box = fVolume->GetShape()->GetBoundingBox();
    const Double_t *box_orig = box->GetOrigin();
    if (td.fVoxInc[0] == 0) {
       td.fVoxLimits[0] = TGeoShape::Big();
@@ -1790,7 +1790,7 @@ void TGeoVoxelFinder::SortAll(Option_t *)
    Int_t nperslice = 1 + (nd - 1) / (8 * sizeof(UChar_t)); /*Nbytes per slice*/
    Int_t nmaxslices = 2 * nd + 1;                          // max number of slices on each axis
    Double_t xmin, xmax, ymin, ymax, zmin, zmax;
-   TGeoBBox *box = (TGeoBBox *)fVolume->GetShape(); // bounding box for volume
+   const TGeoBaseBox *box = fVolume->GetShape()->GetBoundingBox(); // bounding box for volume
    // compute range on X, Y, Z according to volume bounding box
    xmin = (box->GetOrigin())[0] - box->GetDX();
    xmax = (box->GetOrigin())[0] + box->GetDX();

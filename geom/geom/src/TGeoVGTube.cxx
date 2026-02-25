@@ -85,8 +85,13 @@ void TGeoVGTube::ComputeBBox()
 {
 // get parameters from vecgeom
 
-   fDX = fDY = rmax();
-   fDZ = z();
+   Double_t dx, dy, dz;
+   // Double_t origin[3];
+   dx = rmax();
+   dy = rmax();
+   dz = z();
+   // memset(origin, 0, 3 * sizeof(Double_t));
+   fBoundingBox.SetBoxDimensions(dx, dy, dz);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -458,7 +463,7 @@ void TGeoVGTube::InspectShape() const
    printf("    Rmax = %11.5f\n", rmax());
    printf("    dz   = %11.5f\n", z());
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   fBoundingBox.InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -927,7 +932,7 @@ void TGeoVGTube::Sizeof3D() const {}
 const TBuffer3D &TGeoVGTube::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3DTube buffer;
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   fBoundingBox.FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       buffer.fRadiusInner = rmin();

@@ -158,7 +158,7 @@ TGeoTube::TGeoTube()
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying minimum and maximum radius
 
-TGeoTube::TGeoTube(Double_t rmin, Double_t rmax, Double_t dz) : TGeoBBox(0, 0, 0)
+TGeoTube::TGeoTube(Double_t rmin, Double_t rmax, Double_t dz) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoTube);
    SetTubeDimensions(rmin, rmax, dz);
@@ -172,7 +172,7 @@ TGeoTube::TGeoTube(Double_t rmin, Double_t rmax, Double_t dz) : TGeoBBox(0, 0, 0
 ////////////////////////////////////////////////////////////////////////////////
 /// Default constructor specifying minimum and maximum radius
 
-TGeoTube::TGeoTube(const char *name, Double_t rmin, Double_t rmax, Double_t dz) : TGeoBBox(name, 0, 0, 0)
+TGeoTube::TGeoTube(const char *name, Double_t rmin, Double_t rmax, Double_t dz) : TGeoBaseBox(name, 0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoTube);
    SetTubeDimensions(rmin, rmax, dz);
@@ -190,7 +190,7 @@ TGeoTube::TGeoTube(const char *name, Double_t rmin, Double_t rmax, Double_t dz) 
 ///  - param[1] = Rmax
 ///  - param[2] = dz
 
-TGeoTube::TGeoTube(Double_t *param) : TGeoBBox(0, 0, 0)
+TGeoTube::TGeoTube(Double_t *param) : TGeoBaseBox(0, 0, 0)
 {
    SetShapeBit(TGeoShape::kGeoTube);
    SetDimensions(param);
@@ -487,7 +487,7 @@ TGeoTube::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    // find distance to shape
@@ -682,7 +682,7 @@ void TGeoTube::InspectShape() const
    printf("    Rmax = %11.5f\n", fRmax);
    printf("    dz   = %11.5f\n", fDz);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1197,7 +1197,7 @@ void TGeoTube::Sizeof3D() const {}
 const TBuffer3D &TGeoTube::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3DTube buffer;
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       buffer.fRadiusInner = fRmin;
@@ -1899,7 +1899,7 @@ Double_t TGeoTubeSeg::DistFromOutside(const Double_t *point, const Double_t *dir
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    if ((fPhi2 - fPhi1) >= 360.)
@@ -2063,7 +2063,7 @@ void TGeoTubeSeg::InspectShape() const
    printf("    phi1 = %11.5f\n", fPhi1);
    printf("    phi2 = %11.5f\n", fPhi2);
    printf(" Bounding box:\n");
-   TGeoBBox::InspectShape();
+   TGeoBaseBox::InspectShape();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2507,7 +2507,7 @@ void TGeoTubeSeg::Sizeof3D() const {}
 const TBuffer3D &TGeoTubeSeg::GetBuffer3D(Int_t reqSections, Bool_t localFrame) const
 {
    static TBuffer3DTubeSeg buffer;
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       // These from TBuffer3DTube / TGeoTube
@@ -2908,7 +2908,7 @@ TGeoCtub::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact
          return TGeoShape::Big();
    }
    // Check if the bounding box is crossed within the requested distance
-   Double_t sdist = TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
+   Double_t sdist = TGeoBaseBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step);
    if (sdist >= step)
       return TGeoShape::Big();
    Double_t saf[2];
@@ -3377,7 +3377,7 @@ const TBuffer3D &TGeoCtub::GetBuffer3D(Int_t reqSections, Bool_t localFrame) con
 {
    static TBuffer3DCutTube buffer;
 
-   TGeoBBox::FillBuffer3D(buffer, reqSections, localFrame);
+   TGeoBaseBox::FillBuffer3D(buffer, reqSections, localFrame);
 
    if (reqSections & TBuffer3D::kShapeSpecific) {
       // These from TBuffer3DCutTube / TGeoCtub

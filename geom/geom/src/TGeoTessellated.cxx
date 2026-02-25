@@ -93,7 +93,7 @@ bool TGeoFacet::IsNeighbour(const TGeoFacet &other, bool &flip) const
 /// Constructor. In case nfacets is zero, it is user's responsibility to
 /// call CloseShape once all faces are defined.
 
-TGeoTessellated::TGeoTessellated(const char *name, int nfacets) : TGeoBBox(name, 0, 0, 0)
+TGeoTessellated::TGeoTessellated(const char *name, int nfacets) : TGeoBaseBox(name, 0, 0, 0)
 {
    fNfacets = nfacets;
    if (nfacets)
@@ -104,7 +104,7 @@ TGeoTessellated::TGeoTessellated(const char *name, int nfacets) : TGeoBBox(name,
 /// Constructor providing directly the array of vertices. Facets have to be added
 /// providing vertex indices rather than coordinates.
 
-TGeoTessellated::TGeoTessellated(const char *name, const std::vector<Vertex_t> &vertices) : TGeoBBox(name, 0, 0, 0)
+TGeoTessellated::TGeoTessellated(const char *name, const std::vector<Vertex_t> &vertices) : TGeoBaseBox(name, 0, 0, 0)
 {
    fVertices = vertices;
    fNvert = fVertices.size();

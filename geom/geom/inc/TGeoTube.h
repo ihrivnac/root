@@ -19,9 +19,9 @@
   using TGeoCtub = TGeoVGCtub;
 #else
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
-class TGeoTube : public TGeoBBox {
+class TGeoTube : public TGeoBaseBox {
 protected:
    // data members
    Double_t fRmin; // inner radius

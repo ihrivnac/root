@@ -16,7 +16,7 @@
 
 // forward declarations
 class TGeoBoolCombinator;
-class TGeoBBox;
+class TGeoBaseBox;
 class TGeoMatrix;
 class TGeoHMatrix;
 class TGeoVolume;
@@ -121,12 +121,13 @@ public:
    void ExecuteEvent(Int_t event, Int_t px, Int_t py) override;
    virtual const char *GetAxisName(Int_t iaxis) const = 0;
    virtual Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const = 0;
+   virtual const TGeoBaseBox* GetBoundingBox() const = 0;
    virtual void GetBoundingCylinder(Double_t *param) const = 0;
    virtual const TBuffer3D &GetBuffer3D(Int_t reqSections, Bool_t localFrame) const;
    virtual Int_t GetByteCount() const = 0;
    virtual Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const = 0;
    virtual Int_t
-   GetFittingBox(const TGeoBBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const = 0;
+   GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const = 0;
    Int_t GetId() const { return fShapeId; }
    virtual TGeoShape *GetMakeRuntimeShape(TGeoShape *mother, TGeoMatrix *mat) const = 0;
    virtual void GetMeshNumbers(Int_t & /*nvert*/, Int_t & /*nsegs*/, Int_t & /*npols*/) const {}
