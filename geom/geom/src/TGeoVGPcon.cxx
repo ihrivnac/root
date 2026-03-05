@@ -469,12 +469,12 @@ TGeoVGPcon::Divide(TGeoVolume *voldiv, const char *divname, Int_t iaxis, Int_t n
          Bool_t is_seg = (fDphi < 360) ? kTRUE : kFALSE;
          if (is_seg) {
             if (is_tube)
-               shape = new TGeoVGTubeSeg(fRmin[isect], fRmax[isect], step / 2, fPhi1, fPhi1 + fDphi);
+               shape = new TGeoTubeSeg(fRmin[isect], fRmax[isect], step / 2, fPhi1, fPhi1 + fDphi);
             else
                shape = new TGeoConeSeg(step / 2, rmin1, rmax1, rmin2, rmax2, fPhi1, fPhi1 + fDphi);
          } else {
             if (is_tube)
-               shape = new TGeoVGTube(fRmin[isect], fRmax[isect], step / 2);
+               shape = new TGeoTube(fRmin[isect], fRmax[isect], step / 2);
             else
                shape = new TGeoCone(step / 2, rmin1, rmax1, rmin2, rmax2);
          }
