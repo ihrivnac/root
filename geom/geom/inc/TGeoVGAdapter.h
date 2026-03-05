@@ -9,7 +9,7 @@
 #ifndef ROOT_TGeoVGAdapter
 #define ROOT_TGeoVGAdapter
 
-// #if defined(ROOT_USE_VECGEOM_SOLIDS)
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
 
 #include "TGeoShape.h"
 #include "TGeoBaseBox.h"
@@ -218,6 +218,6 @@ protected:
 
 #include "TGeoVGAdapter.icc"
 
-// #endif //  ROOT_USE_VECGEOM_SOLIDS
+#endif //  ROOT_USE_VECGEOM_SOLIDS
 
 #endif

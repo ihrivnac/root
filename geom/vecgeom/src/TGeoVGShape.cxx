@@ -497,6 +497,3 @@ void TGeoVGShape::Streamer(TBuffer &R__b)
       R__b.WriteClassBuffer(TGeoVGShape::Class(), this);
    }
 }
-
-#endif // ROOT_USE_VECGEOM_SOLIDS
-
