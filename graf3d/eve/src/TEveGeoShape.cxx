@@ -186,7 +186,7 @@ void TEveGeoShape::SetShape(TGeoShape* s)
 
 void TEveGeoShape::ComputeBBox()
 {
-   TGeoBBox *bb = dynamic_cast<TGeoBBox*>(fShape);
+   const TGeoBaseBox *bb = fShape->GetBoundingBox();
    if (bb)
    {
       BBoxInit();

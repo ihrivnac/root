@@ -38,7 +38,7 @@ ClassImp(TEveGeoPolyShape);
 /// Constructor.
 
 TEveGeoPolyShape::TEveGeoPolyShape() :
-   TGeoBBox(),
+   TGeoBaseBox(),
    fNbPols(0)
 {
 }

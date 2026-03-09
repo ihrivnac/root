@@ -214,7 +214,7 @@ void REveGeoShape::SetShape(TGeoShape *s)
 
 void REveGeoShape::ComputeBBox()
 {
-   TGeoBBox *bb = dynamic_cast<TGeoBBox *>(fShape);
+   const TGeoBaseBox *bb = fShape->GetBoundingBox();
    if (bb) {
       BBoxInit();
       const Double_t *o = bb->GetOrigin();

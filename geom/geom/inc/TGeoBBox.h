@@ -12,6 +12,11 @@
 #ifndef ROOT_TGeoBBox
 #define ROOT_TGeoBBox
 
+#if defined(ROOT_USE_VECGEOM_SOLIDS)
+  #include "TGeoVGBBox.h"
+  using TGeoBBox = TGeoVGBBox;
+#else
+
 #include "TGeoShape.h"
 #include "TGeoBaseBox.h"
 
@@ -98,5 +103,7 @@ public:
 
    ClassDefOverride(TGeoBBox, 1) // box primitive
 };
+
+#endif
 
 #endif

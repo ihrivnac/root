@@ -173,6 +173,9 @@ private:
    XMLNodePointer_t CreateZplaneN(Double_t z, Double_t rmin, Double_t rmax);
 
    XMLNodePointer_t CreateBoxN(TGeoBBox *geoShape);
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+   XMLNodePointer_t CreateBoxN(TGeoBaseBox *geoShape);
+#endif
    XMLNodePointer_t CreateParaboloidN(TGeoParaboloid *geoShape);
    XMLNodePointer_t CreateSphereN(TGeoSphere *geoShape);
    XMLNodePointer_t CreateArb8N(TGeoArb8 *geoShape);

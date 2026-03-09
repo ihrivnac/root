@@ -12,7 +12,7 @@
 #ifndef ROOT7_REveGeoPolyShape
 #define ROOT7_REveGeoPolyShape
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 #include <vector>
 
@@ -25,7 +25,7 @@ namespace Experimental {
 
 class REveRenderData;
 
-class REveGeoPolyShape : public TGeoBBox
+class REveGeoPolyShape : public TGeoBaseBox
 {
 private:
    REveGeoPolyShape(const REveGeoPolyShape&) = delete;

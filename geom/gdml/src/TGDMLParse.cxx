@@ -2687,7 +2687,7 @@ XMLNodePointer_t TGDMLParse::Ellipsoid(TXMLEngine *gdml, XMLNodePointer_t node, 
    Double_t origin[3] = {0., 0., 0.};
    origin[2] = 0.5 * (z1 + z2);
    Double_t dz = 0.5 * (z2 - z1);
-   TGeoBBox *pCutBox = new TGeoBBox("cutBox", dx, dy, dz, origin);
+   TGeoBaseBox *pCutBox = new TGeoBaseBox("cutBox", dx, dy, dz, origin);
    TGeoBoolNode *pBoolNode = new TGeoIntersection(shape, pCutBox, nullptr, nullptr);
    TGeoCompositeShape *cs = new TGeoCompositeShape(NameShort(name), pBoolNode);
    fsolmap[local_name.Data()] = cs;

@@ -136,7 +136,7 @@ void REveGeoPolyShape::BuildFromComposite(TGeoCompositeShape *cshape, Int_t n_se
 
 void REveGeoPolyShape::BuildFromShape(TGeoShape *shape, Int_t n_seg)
 {
-   TGeoBBox *box = dynamic_cast<TGeoBBox *> (shape);
+   const TGeoBaseBox *box = shape->GetBoundingBox();
 
    if (box) {
       fOrigin[0] = box->GetOrigin()[0];

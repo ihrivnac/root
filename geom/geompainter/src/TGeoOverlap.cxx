@@ -16,7 +16,7 @@
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
 #include "TGeoNode.h"
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 #include "TRandom3.h"
 #include "TPolyMarker3D.h"
 #include "TVirtualGeoPainter.h"
@@ -187,7 +187,7 @@ void TGeoOverlap::SampleOverlap(Int_t npoints)
    Draw();
    // Select bounding box of the second volume (may extrude first)
    TPolyMarker3D *marker = nullptr;
-   TGeoBBox *box = (TGeoBBox *)fVolume2->GetShape();
+   const TGeoBaseBox *box = fVolume2->GetShape()->GetBoundingBox();
    Double_t dx = box->GetDX();
    Double_t dy = box->GetDY();
    Double_t dz = box->GetDZ();

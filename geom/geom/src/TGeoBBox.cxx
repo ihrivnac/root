@@ -144,6 +144,10 @@ Both cases are supported by all shapes.
 See also class TGeoShape for utility methods provided by any particular shape.
 */
 
+#include "TGeoBBox.h"
+
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+
 #include <iostream>
 
 #include "TGeoManager.h"
@@ -151,7 +155,6 @@ See also class TGeoShape for utility methods provided by any particular shape.
 #include "TGeoVolume.h"
 #include "TVirtualGeoPainter.h"
 #include "TGeoBaseBox.h"
-#include "TGeoBBox.h"
 #include "TBuffer3D.h"
 #include "TBuffer3DTypes.h"
 #include "TMath.h"
@@ -1207,3 +1210,5 @@ void TGeoBBox::Safety_v(const Double_t *points, const Bool_t *inside, Double_t *
    for (Int_t i = 0; i < vecsize; i++)
       safe[i] = Safety(&points[3 * i], inside[i]);
 }
+
+#endif

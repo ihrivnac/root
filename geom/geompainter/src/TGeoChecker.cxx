@@ -72,7 +72,7 @@ volume by material sampling. Accepts as input the desired precision.
 #include "TStopwatch.h"
 
 #include "TGeoVoxelFinder.h"
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 #include "TGeoPcon.h"
 #include "TGeoTessellated.h"
 #include "TGeoManager.h"
@@ -259,7 +259,7 @@ void TGeoChecker::CheckBoundaryErrors(Int_t ntracks, Double_t radius)
    TGeoVolume *tvol = fGeoManager->GetTopVolume();
    Info("CheckBoundaryErrors", "Top volume is %s", tvol->GetName());
    const TGeoShape *shape = tvol->GetShape();
-   TGeoBBox *box = (TGeoBBox *)shape;
+   const TGeoBaseBox *box = shape->GetBoundingBox();
    Double_t dl[3];
    Double_t ori[3];
    Double_t xyz[3];
@@ -742,7 +742,7 @@ Double_t TGeoChecker::TimingPerVolume(TGeoVolume *vol)
 {
    fTimer->Reset();
    const TGeoShape *shape = vol->GetShape();
-   TGeoBBox *box = (TGeoBBox *)shape;
+   const TGeoBaseBox *box = shape->GetBoundingBox();
    Double_t dx = box->GetDX();
    Double_t dy = box->GetDY();
    Double_t dz = box->GetDZ();
@@ -1205,7 +1205,7 @@ void TGeoChecker::CheckOverlapsBySampling(TGeoVolume *vol, Double_t ovlp, Int_t 
       voxels->Voxelize();
       vol->FindOverlaps();
    }
-   TGeoBBox *box = (TGeoBBox *)vol->GetShape();
+   TGeoBaseBox *box = (TGeoBaseBox *)vol->GetShape();
    TGeoShape *shape;
    TGeoNode *node;
    Double_t dx = box->GetDX();
@@ -1533,8 +1533,8 @@ void TGeoChecker::CheckOverlaps(const TGeoVolume *vol, Double_t ovlp, Option_t *
          if (node02->IsOverlapping())
             continue;
          // Try to fasten-up things...
-         //         if (!TGeoBBox::AreOverlapping((TGeoBBox*)node01->GetVolume()->GetShape(), node01->GetMatrix(),
-         //                                       (TGeoBBox*)node02->GetVolume()->GetShape(), node02->GetMatrix()))
+         //         if (!TGeoBaseBox::AreOverlapping(node01->GetVolume()->GetShape()->GetBoundingBox(), node01->GetMatrix(),
+         //                                          node02->GetVolume()->GetShape()->GetBoundingBox(), node02->GetMatrix())
          //                                       continue;
          next2.SetTopName(node02->GetName());
          path1 = node02->GetName();
@@ -1770,9 +1770,9 @@ void TGeoChecker::CheckShape(TGeoShape *shape, Int_t testNo, Int_t nsamples, Opt
 
 void TGeoChecker::ShapeDistances(TGeoShape *shape, Int_t nsamples, Option_t *)
 {
-   Double_t dx = ((TGeoBBox *)shape)->GetDX();
-   Double_t dy = ((TGeoBBox *)shape)->GetDY();
-   Double_t dz = ((TGeoBBox *)shape)->GetDZ();
+   Double_t dx = shape->GetBoundingBox()->GetDX();
+   Double_t dy = shape->GetBoundingBox()->GetDY();
+   Double_t dz = shape->GetBoundingBox()->GetDZ();
    Double_t dmax = 2. * TMath::Sqrt(dx * dx + dy * dy + dz * dz);
    Double_t d1, d2, dmove, dnext;
    Int_t itot = 0;
@@ -1939,9 +1939,9 @@ void TGeoChecker::ShapeDistances(TGeoShape *shape, Int_t nsamples, Option_t *)
 
 void TGeoChecker::ShapeSafety(TGeoShape *shape, Int_t nsamples, Option_t *)
 {
-   Double_t dx = ((TGeoBBox *)shape)->GetDX();
-   Double_t dy = ((TGeoBBox *)shape)->GetDY();
-   Double_t dz = ((TGeoBBox *)shape)->GetDZ();
+   Double_t dx = shape->GetBoundingBox()->GetDX();
+   Double_t dy = shape->GetBoundingBox()->GetDY();
+   Double_t dz = shape->GetBoundingBox()->GetDZ();
    // Number of tracks shot for every point inside the shape
    const Int_t kNtracks = 1000;
    Int_t n10 = nsamples / 10;
@@ -2013,9 +2013,9 @@ void TGeoChecker::ShapeSafety(TGeoShape *shape, Int_t nsamples, Option_t *)
 
 void TGeoChecker::ShapeNormal(TGeoShape *shape, Int_t nsamples, Option_t *)
 {
-   Double_t dx = ((TGeoBBox *)shape)->GetDX();
-   Double_t dy = ((TGeoBBox *)shape)->GetDY();
-   Double_t dz = ((TGeoBBox *)shape)->GetDZ();
+   Double_t dx = shape->GetBoundingBox()->GetDX();
+   Double_t dy = shape->GetBoundingBox()->GetDY();
+   Double_t dz = shape->GetBoundingBox()->GetDZ();
    Double_t dmax = 2. * TMath::Sqrt(dx * dx + dy * dy + dz * dz);
    // Number of tracks shot for every point inside the shape
    const Int_t kNtracks = 1000;
@@ -2268,7 +2268,7 @@ void TGeoChecker::RandomPoints(TGeoVolume *vol, Int_t npoints, Option_t *option)
    TObjArray *pm = new TObjArray(128);
    TPolyMarker3D *marker = nullptr;
    const TGeoShape *shape = vol->GetShape();
-   TGeoBBox *box = (TGeoBBox *)shape;
+   const TGeoBaseBox *box = shape->GetBoundingBox();
    Double_t dx = box->GetDX();
    Double_t dy = box->GetDY();
    Double_t dz = box->GetDZ();
@@ -2365,12 +2365,12 @@ void TGeoChecker::RandomRays(Int_t nrays, Double_t startx, Double_t starty, Doub
    Int_t itot = 0;
    Int_t n10 = nrays / 10;
    Double_t theta, phi, step, normlen;
-   Double_t ox = ((TGeoBBox *)vol->GetShape())->GetOrigin()[0];
-   Double_t oy = ((TGeoBBox *)vol->GetShape())->GetOrigin()[1];
-   Double_t oz = ((TGeoBBox *)vol->GetShape())->GetOrigin()[2];
-   Double_t dx = ((TGeoBBox *)vol->GetShape())->GetDX();
-   Double_t dy = ((TGeoBBox *)vol->GetShape())->GetDY();
-   Double_t dz = ((TGeoBBox *)vol->GetShape())->GetDZ();
+   Double_t ox = vol->GetShape()->GetBoundingBox()->GetOrigin()[0];
+   Double_t oy = vol->GetShape()->GetBoundingBox()->GetOrigin()[1];
+   Double_t oz = vol->GetShape()->GetBoundingBox()->GetOrigin()[2];
+   Double_t dx = vol->GetShape()->GetBoundingBox()->GetDX();
+   Double_t dy = vol->GetShape()->GetBoundingBox()->GetDY();
+   Double_t dz = vol->GetShape()->GetBoundingBox()->GetDZ();
    normlen = TMath::Max(dx, dy);
    normlen = TMath::Max(normlen, dz);
    normlen *= 0.05;
@@ -2712,12 +2712,12 @@ void TGeoChecker::Test(Int_t npoints, Option_t *option)
    if (recheck)
       printf("RECHECK\n");
    const TGeoShape *shape = fGeoManager->GetTopVolume()->GetShape();
-   Double_t dx = ((TGeoBBox *)shape)->GetDX();
-   Double_t dy = ((TGeoBBox *)shape)->GetDY();
-   Double_t dz = ((TGeoBBox *)shape)->GetDZ();
-   Double_t ox = (((TGeoBBox *)shape)->GetOrigin())[0];
-   Double_t oy = (((TGeoBBox *)shape)->GetOrigin())[1];
-   Double_t oz = (((TGeoBBox *)shape)->GetOrigin())[2];
+   Double_t dx = shape->GetBoundingBox()->GetDX();
+   Double_t dy = shape->GetBoundingBox()->GetDY();
+   Double_t dz = shape->GetBoundingBox()->GetDZ();
+   Double_t ox = (shape->GetBoundingBox()->GetOrigin())[0];
+   Double_t oy = (shape->GetBoundingBox()->GetOrigin())[1];
+   Double_t oz = (shape->GetBoundingBox()->GetOrigin())[2];
    Double_t *xyz = new Double_t[3 * npoints];
    TStopwatch *timer = new TStopwatch();
    printf("Random box : %f, %f, %f\n", dx, dy, dz);
@@ -2783,12 +2783,12 @@ void TGeoChecker::TestOverlaps(const char *path)
    TNtuple *ntpl = new TNtuple("ntpl", "random points", "x:y:z");
    TGeoShape *shape = fGeoManager->GetCurrentNode()->GetVolume()->GetShape();
    Double_t *point = new Double_t[3];
-   Double_t dx = ((TGeoBBox *)shape)->GetDX();
-   Double_t dy = ((TGeoBBox *)shape)->GetDY();
-   Double_t dz = ((TGeoBBox *)shape)->GetDZ();
-   Double_t ox = (((TGeoBBox *)shape)->GetOrigin())[0];
-   Double_t oy = (((TGeoBBox *)shape)->GetOrigin())[1];
-   Double_t oz = (((TGeoBBox *)shape)->GetOrigin())[2];
+   Double_t dx = shape->GetBoundingBox()->GetDX();
+   Double_t dy = shape->GetBoundingBox()->GetDY();
+   Double_t dz = shape->GetBoundingBox()->GetDZ();
+   Double_t ox = (shape->GetBoundingBox()->GetOrigin())[0];
+   Double_t oy = (shape->GetBoundingBox()->GetOrigin())[1];
+   Double_t oz = (shape->GetBoundingBox()->GetOrigin())[2];
    Double_t *xyz = new Double_t[3 * npoints];
    Int_t i = 0;
    printf("Generating %i points inside %s\n", npoints, fGeoManager->GetPath());
@@ -2898,7 +2898,7 @@ Double_t TGeoChecker::Weight(Double_t precision, Option_t *option)
    TString opt = option;
    opt.ToLower();
    Bool_t isverbose = opt.Contains("v");
-   TGeoBBox *box = (TGeoBBox *)fGeoManager->GetTopVolume()->GetShape();
+   const TGeoBaseBox *box = fGeoManager->GetTopVolume()->GetShape()->GetBoundingBox();
    Double_t dx = box->GetDX();
    Double_t dy = box->GetDY();
    Double_t dz = box->GetDZ();

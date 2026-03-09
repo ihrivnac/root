@@ -12,7 +12,7 @@
 #ifndef ROOT_TEveGeoPolyShape
 #define ROOT_TEveGeoPolyShape
 
-#include "TGeoBBox.h"
+#include "TGeoBaseBox.h"
 
 #include <vector>
 
@@ -20,7 +20,7 @@ class TBuffer3D;
 class TGLFaceSet;
 class TGeoCompositeShape;
 
-class TEveGeoPolyShape : public TGeoBBox
+class TEveGeoPolyShape : public TGeoBaseBox
 {
    friend class TEveGeoPolyShapeGL;
 

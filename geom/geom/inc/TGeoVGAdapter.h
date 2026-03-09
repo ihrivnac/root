@@ -115,11 +115,6 @@ public:
    Double_t Capacity() const override;
    void ComputeNormal(const Double_t *point, const Double_t *dir, Double_t *norm) const override;
    Bool_t Contains(const Double_t *point) const override;
-   // Bool_t CouldBeCrossed(const Double_t *point, const Double_t *dir) const override
-   // {
-   //    return fShape->CouldBeCrossed(point, dir);
-   // }
-   // Int_t DistancetoPrimitive(Int_t px, Int_t py) override { return fShape->DistancetoPrimitive(px, py); }
    Double_t DistFromInside(const Double_t *point, const Double_t *dir, Int_t iact = 1, Double_t step = TGeoShape::Big(),
                            Double_t *safe = nullptr) const override;
    Double_t DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact = 1,
@@ -152,12 +147,14 @@ public:
    Double_t GetAxisRange(Int_t iaxis, Double_t &xlo, Double_t &xhi) const override { return fBoundingBox.GetAxisRange(iaxis, xlo, xhi); }
    void GetBoundingCylinder(Double_t *param) const override { fBoundingBox.GetBoundingCylinder(param); }
    Int_t GetByteCount() const override { return fBoundingBox.GetByteCount(); }
+   virtual Double_t GetFacetArea(Int_t index = 0) const { return fBoundingBox.GetFacetArea(index); }
    virtual Bool_t GetPointsOnFacet(Int_t index, Int_t npoints, Double_t *array) const { return fBoundingBox.GetPointsOnFacet(index, npoints, array); }
    Bool_t GetPointsOnSegments(Int_t npoints, Double_t *array) const override  { return fBoundingBox.GetPointsOnSegments(npoints, array); }
    Int_t
    GetFittingBox(const TGeoBaseBox *parambox, TGeoMatrix *mat, Double_t &dx, Double_t &dy, Double_t &dz) const override { return fBoundingBox.GetFittingBox(parambox, mat, dx, dy, dz); }
    Bool_t IsCylType() const override { return fBoundingBox.IsCylType(); }
    Bool_t IsValidBox() const override { return fBoundingBox.IsValidBox(); }
+   virtual Bool_t IsNullBox() const { return fBoundingBox.IsNullBox(); }
    void SetPoints(Double_t *points) const override { return fBoundingBox.SetPoints(points); }
    void SetPoints(Float_t *points) const override { return fBoundingBox.SetPoints(points); }
    void SetSegsAndPols(TBuffer3D &buffer) const override { fBoundingBox.SetSegsAndPols(buffer); }

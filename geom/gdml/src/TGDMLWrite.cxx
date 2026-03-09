@@ -1659,7 +1659,7 @@ XMLNodePointer_t TGDMLWrite::CreateEllipsoidN(TGeoCompositeShape *geoShape, TStr
    XMLNodePointer_t mainN = fGdmlE->NewChild(nullptr, nullptr, "ellipsoid", nullptr);
    const TString fltPrecision = TString::Format("%%.%dg", fFltPrecision);
    TGeoScaledShape *leftS = (TGeoScaledShape *)geoShape->GetBoolNode()->GetLeftShape(); // ScaledShape
-   TGeoBBox *rightS = (TGeoBBox *)geoShape->GetBoolNode()->GetRightShape();             // BBox
+   const TGeoBaseBox *rightS = geoShape->GetBoolNode()->GetRightShape()->GetBoundingBox();    // BaseBox
 
    fGdmlE->NewAttr(mainN, nullptr, "name", elName.Data());
    Double_t sx = leftS->GetScale()->GetScale()[0];
@@ -2196,6 +2196,10 @@ XMLNodePointer_t TGDMLWrite::ChooseObject(TGeoShape *geoShape)
    // process different shapes
    if (strcmp(clsname, "TGeoBBox") == 0) {
       solidN = CreateBoxN((TGeoBBox *)geoShape);
+#if ! defined(ROOT_USE_VECGEOM_SOLIDS)
+   } else if (strcmp(clsname, "TGeoBaseBox") == 0) {
+      solidN = CreateBoxN((TGeoBaseBox *)geoShape);
+#endif
    } else if (strcmp(clsname, "TGeoParaboloid") == 0) {
       solidN = CreateParaboloidN((TGeoParaboloid *)geoShape);
    } else if (strcmp(clsname, "TGeoSphere") == 0) {
@@ -2307,7 +2311,7 @@ TGeoCompositeShape *TGDMLWrite::CreateFakeCtub(TGeoCtub *geoShape)
    Double_t z2 = geoShape->GetNhigh()[2];
    TString xname = geoShape->GetName();
 
-   Double_t h0 = 2. * ((TGeoBBox *)geoShape)->GetDZ();
+   Double_t h0 = 2. * geoShape->GetBoundingBox()->GetDZ();
    Double_t h1 = 2 * z;
    Double_t h2 = 2 * z;
    Double_t boxdx = 1E8 * (2 * rmax) + (2 * z);
