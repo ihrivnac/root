@@ -80,6 +80,8 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoVGSphere.h
     TGeoVGXtru.h
     TGeoVGBBox.h
+    TGeoVGMultiUnion.h
+    TGeoMultiUnion.h
   SOURCES
     src/TGDMLMatrix.cxx
     src/TGeoArb8.cxx
@@ -150,6 +152,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TGeoVGSphere.cxx
     src/TGeoVGXtru.cxx
     src/TGeoVGBBox.cxx
+    src/TGeoVGMultiUnion.cxx
   LIBRARIES
     ${VECGEOM_LIBRARIES}
     ${CMAKE_DL_LIBS}

@@ -110,6 +110,8 @@ public:
      */
     Bool_t operator==(const TGeoVGAdapter& s) const;
 
+    UnplacedVolume_t const* GetUnplaced() const { return this; }
+
     // Overriding functions (from TGeoBBox::TGeoShape)
     //
    Double_t Capacity() const override;
