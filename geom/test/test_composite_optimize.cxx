@@ -42,6 +42,9 @@ TEST(TGeoCompositeShapeOptimize, FlattensUnionAndComposesTransforms)
    TGeoCompositeShape nested("nested_union", new TGeoUnion(&first, &second, firstMatrix, secondMatrix));
    TGeoCompositeShape original("union3", new TGeoUnion(&nested, &third, nestedMatrix, thirdMatrix));
 
+   EXPECT_TRUE(original.CanOptimize());
+   EXPECT_FALSE(original.CanOptimize(4));
+   EXPECT_EQ(original.Optimize(4), &original);
    TGeoShape *optimized = original.Optimize();
    auto *multiUnion = dynamic_cast<TGeoMultiUnion *>(optimized);
    ASSERT_NE(multiUnion, nullptr);
@@ -135,6 +138,17 @@ TEST(TGeoCompositeShapeOptimize, RejectsIntersection)
    EXPECT_EQ(original.Optimize(), &original);
 }
 
+TEST(TGeoCompositeShapeOptimize, RejectsSubtractionOnRightHandSide)
+{
+   TGeoBBox first(3., 3., 3.);
+   TGeoBBox second(2., 2., 2.);
+   TGeoBBox third(1., 1., 1.);
+   TGeoCompositeShape nested("nested_subtraction", new TGeoSubtraction(&second, &third));
+   TGeoCompositeShape original("right_subtraction", new TGeoSubtraction(&first, &nested));
+
+   EXPECT_EQ(original.Optimize(), &original);
+}
+
 TEST(TGeoCompositeShapeOptimize, RejectsInfiniteHalfSpaceComponent)
 {
    TGeoBBox outer(3., 3., 3.);
@@ -146,16 +160,5 @@ TEST(TGeoCompositeShapeOptimize, RejectsInfiniteHalfSpaceComponent)
    TGeoCompositeShape original("clipped_with_hole", new TGeoSubtraction(&clipped, &hole));
 
    EXPECT_FALSE(original.CanOptimize());
-   EXPECT_EQ(original.Optimize(), &original);
-}
-
-TEST(TGeoCompositeShapeOptimize, RejectsSubtractionOnRightHandSide)
-{
-   TGeoBBox first(3., 3., 3.);
-   TGeoBBox second(2., 2., 2.);
-   TGeoBBox third(1., 1., 1.);
-   TGeoCompositeShape nested("nested_subtraction", new TGeoSubtraction(&second, &third));
-   TGeoCompositeShape original("right_subtraction", new TGeoSubtraction(&first, &nested));
-
    EXPECT_EQ(original.Optimize(), &original);
 }

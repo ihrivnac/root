@@ -975,7 +975,7 @@ TEST(TGeoMultiUnionGeometryEquivalence, ComplexGeometryNavigation)
    PathTable paths;
 
    const Int_t shapeCount = manager.GetListOfShapes()->GetEntriesFast();
-   ASSERT_EQ(manager.OptimizeCompositeShapes(), 3);
+   ASSERT_EQ(manager.OptimizeCompositeShapes(kFALSE, 3), 3);
    ASSERT_EQ(manager.GetListOfShapes()->GetEntriesFast(), shapeCount);
    const GeometrySnapshot baseline = CaptureBaseline(manager, corpus, config, paths);
    const Bool_t timingEnabled = TimingEnabled();
@@ -998,9 +998,9 @@ TEST(TGeoMultiUnionGeometryEquivalence, ComplexGeometryNavigation)
    const auto differenceNormal =
       CaptureNormal(*fixture.fUnionMinusUnion->GetShape(), differencePoint, differenceDirection);
 
-   ASSERT_EQ(manager.OptimizeCompositeShapes(kTRUE), 3);
+   ASSERT_EQ(manager.OptimizeCompositeShapes(kTRUE, 3), 3);
    CheckOptimizedStructure(fixture, config.fDepth);
-   ASSERT_EQ(manager.OptimizeCompositeShapes(kTRUE), 0);
+   ASSERT_EQ(manager.OptimizeCompositeShapes(kTRUE, 3), 0);
 
    CompareNormal("multi-union", *fixture.fSharedFirst->GetShape(), sharedPoint, sharedDirection, sharedNormal);
    CompareNormal("shape minus multi-union", *fixture.fShapeMinusUnion->GetShape(), subtractionPoint,

@@ -1633,10 +1633,15 @@ void TGeoManager::CloseGeometry(Option_t *option)
 /// processed. Each distinct placed composite shape is analyzed once, even when
 /// it is shared by several placed volumes. When replace is true, every reachable
 /// volume using an optimizable shape is updated to use the same optimized shape.
-/// Existing voxel finders are marked for lazy rebuilding.
+/// Existing voxel finders are marked for lazy rebuilding. By default
+/// (minimumLeaves <= 0), the measured automatic threshold of 10 primitive
+/// leaves is used. A positive value overrides this policy; values below 3 are
+/// clamped because a two-leaf Boolean cannot benefit from this rewrite.
 
-Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace)
+Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace, Int_t minimumLeaves)
 {
+   constexpr Int_t automaticMinimumLeaves = 10;
+   const Int_t leafThreshold = minimumLeaves <= 0 ? automaticMinimumLeaves : std::max(3, minimumLeaves);
    TGeoVolume *rootVolume = fMasterVolume ? fMasterVolume : fTopVolume;
    if (!rootVolume) {
       Info("OptimizeCompositeShapes", "Optimized 0 of 0 placed composite shapes%s",
@@ -1677,13 +1682,13 @@ Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace)
    Int_t optimized = 0;
    for (std::size_t index = 0; index < placedComposites.size(); ++index) {
       TGeoCompositeShape *composite = placedComposites[index];
-      if (!composite->CanOptimize())
+      if (!composite->CanOptimize(leafThreshold))
          continue;
       ++optimized;
       if (!replace)
          continue;
 
-      TGeoShape *replacement = composite->Optimize();
+      TGeoShape *replacement = composite->Optimize(leafThreshold);
       if (replacement == composite)
          continue;
       for (TGeoVolume *volume : compositeVolumes[index])
@@ -1700,8 +1705,9 @@ Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace)
       ModifiedPad();
    }
 
-   Info("OptimizeCompositeShapes", "Optimized %d of %zu placed composite shapes%s", optimized,
-        placedComposites.size(), replace ? " and replaced their volume references" : " (dry run)");
+   Info("OptimizeCompositeShapes", "Optimized %d of %zu placed composite shapes with at least %d leaves%s",
+        optimized, placedComposites.size(), leafThreshold,
+        replace ? " and replaced their volume references" : " (dry run)");
    return optimized;
 }
 

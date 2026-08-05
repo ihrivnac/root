@@ -194,6 +194,7 @@ criteria. Volumes created based on composite shapes cannot be divided.
 
 #include "TGeoCompositeShape.h"
 
+#include <algorithm>
 #include <vector>
 
 namespace {
@@ -282,17 +283,19 @@ TGeoMultiUnion *MakeMultiUnion(const TString &name, const MultiUnionTerms &terms
    return multiUnion;
 }
 
-Bool_t AnalyzeOptimization(TGeoCompositeShape *shape, MultiUnionTerms &positive, MultiUnionTerms &negative)
+Bool_t AnalyzeOptimization(TGeoCompositeShape *shape, MultiUnionTerms &positive, MultiUnionTerms &negative,
+                           Int_t minimumLeaves)
 {
+   const auto threshold = static_cast<std::size_t>(std::max(3, minimumLeaves));
    TGeoHMatrix identity;
    Bool_t hasComposite = kFALSE;
    if (CollectUnionTerms(shape, identity, positive, hasComposite))
-      return hasComposite && positive.size() > 2;
+      return hasComposite && positive.size() >= threshold;
 
    positive.clear();
    hasComposite = kFALSE;
    return CollectDifferenceTerms(shape, identity, positive, negative, hasComposite) && hasComposite &&
-          !negative.empty() && positive.size() + negative.size() > 2;
+          !negative.empty() && positive.size() + negative.size() >= threshold;
 }
 
 } // namespace
@@ -549,14 +552,14 @@ void TGeoCompositeShape::MakeNode(const char *expression)
 /// this object is returned. The optimized result is a newly allocated shape
 /// registered with the current TGeoManager, as for other named TGeo shapes.
 
-TGeoShape *TGeoCompositeShape::Optimize()
+TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves)
 {
    if (!fNode)
       return this;
 
    MultiUnionTerms positive;
    MultiUnionTerms negative;
-   if (!AnalyzeOptimization(this, positive, negative))
+   if (!AnalyzeOptimization(this, positive, negative, minimumLeaves))
       return this;
    if (negative.empty())
       return MakeMultiUnion(OptimizedName(*this, "multiunion"), positive);
@@ -580,13 +583,13 @@ TGeoShape *TGeoCompositeShape::Optimize()
 /// Return whether Optimize() can replace this shape without constructing the
 /// replacement. This is used for side-effect-free geometry-wide dry runs.
 
-Bool_t TGeoCompositeShape::CanOptimize() const
+Bool_t TGeoCompositeShape::CanOptimize(Int_t minimumLeaves) const
 {
    if (!fNode)
       return kFALSE;
    MultiUnionTerms positive;
    MultiUnionTerms negative;
-   return AnalyzeOptimization(const_cast<TGeoCompositeShape *>(this), positive, negative);
+   return AnalyzeOptimization(const_cast<TGeoCompositeShape *>(this), positive, negative, minimumLeaves);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

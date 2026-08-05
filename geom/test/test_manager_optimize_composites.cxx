@@ -11,6 +11,27 @@
 #include <TGeoVolume.h>
 #include <TGeoVoxelFinder.h>
 
+#include <string>
+
+namespace {
+
+TGeoCompositeShape *MakeNestedUnion(const char *prefix, Int_t leaves)
+{
+   const auto makeBox = [prefix](Int_t index) {
+      const std::string name = std::string(prefix) + "_box_" + std::to_string(index);
+      return new TGeoBBox(name.c_str(), 1., 1., 1.);
+   };
+   std::string name = std::string(prefix) + "_union_2";
+   auto *result = new TGeoCompositeShape(name.c_str(), new TGeoUnion(makeBox(0), makeBox(1)));
+   for (Int_t index = 2; index < leaves; ++index) {
+      name = std::string(prefix) + "_union_" + std::to_string(index + 1);
+      result = new TGeoCompositeShape(name.c_str(), new TGeoUnion(result, makeBox(index)));
+   }
+   return result;
+}
+
+} // namespace
+
 TEST(TGeoManagerOptimizeCompositeShapes, ProcessesOnlyDistinctPlacedShapes)
 {
    TGeoManager manager("manager_optimize", "manager optimize test");
@@ -40,8 +61,10 @@ TEST(TGeoManagerOptimizeCompositeShapes, ProcessesOnlyDistinctPlacedShapes)
    top->AddNode(firstVolume, 1, new TGeoTranslation(-20., 0., 0.));
    top->AddNode(secondVolume, 1, new TGeoTranslation(20., 0., 0.));
 
-   auto *ineligibleShape =
-      new TGeoCompositeShape("placed_intersection", new TGeoIntersection(first, second));
+   auto *intersectionFirst = new TGeoBBox("intersection_first", 1., 1., 1.);
+   auto *intersectionSecond = new TGeoBBox("intersection_second", 1., 1., 1.);
+   auto *ineligibleShape = new TGeoCompositeShape("placed_intersection",
+                                                   new TGeoIntersection(intersectionFirst, intersectionSecond));
    auto *ineligibleVolume = new TGeoVolume("ineligible_volume", ineligibleShape, medium);
    top->AddNode(ineligibleVolume, 1);
 
@@ -52,7 +75,7 @@ TEST(TGeoManagerOptimizeCompositeShapes, ProcessesOnlyDistinctPlacedShapes)
    manager.CloseGeometry();
    const Int_t shapesBefore = manager.GetListOfShapes()->GetEntriesFast();
 
-   EXPECT_EQ(manager.OptimizeCompositeShapes(), 1);
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kFALSE, 3), 1);
    EXPECT_EQ(manager.GetListOfShapes()->GetEntriesFast(), shapesBefore);
    EXPECT_EQ(firstVolume->GetShape(), placedShape);
    EXPECT_EQ(secondVolume->GetShape(), placedShape);
@@ -60,7 +83,7 @@ TEST(TGeoManagerOptimizeCompositeShapes, ProcessesOnlyDistinctPlacedShapes)
 
    ASSERT_NE(top->GetVoxels(), nullptr);
    EXPECT_FALSE(top->GetVoxels()->NeedRebuild());
-   EXPECT_EQ(manager.OptimizeCompositeShapes(kTRUE), 1);
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kTRUE, 3), 1);
 
    auto *replacement = dynamic_cast<TGeoMultiUnion *>(firstVolume->GetShape());
    ASSERT_NE(replacement, nullptr);
@@ -69,4 +92,36 @@ TEST(TGeoManagerOptimizeCompositeShapes, ProcessesOnlyDistinctPlacedShapes)
    EXPECT_EQ(ineligibleVolume->GetShape(), ineligibleShape);
    EXPECT_EQ(unusedVolume->GetShape(), unusedShape);
    EXPECT_TRUE(top->GetVoxels()->NeedRebuild());
+}
+
+TEST(TGeoManagerOptimizeCompositeShapes, AppliesAutomaticMinimumLeafThreshold)
+{
+   TGeoManager manager("manager_threshold", "manager automatic threshold test");
+   auto *material = new TGeoMaterial("threshold_material", 1., 1., 1.);
+   auto *medium = new TGeoMedium("threshold_medium", 1, material);
+   auto *top = new TGeoVolume("threshold_top", new TGeoBBox("threshold_top_box", 100., 100., 100.), medium);
+   manager.SetTopVolume(top);
+
+   auto *shallow = MakeNestedUnion("shallow", 4);
+   auto *deep = MakeNestedUnion("deep", 10);
+   auto *shallowVolume = new TGeoVolume("shallow_volume", shallow, medium);
+   auto *deepVolume = new TGeoVolume("deep_volume", deep, medium);
+   top->AddNode(shallowVolume, 1, new TGeoTranslation(-10., 0., 0.));
+   top->AddNode(deepVolume, 1, new TGeoTranslation(10., 0., 0.));
+   manager.CloseGeometry();
+
+   EXPECT_EQ(manager.OptimizeCompositeShapes(), 1);
+   EXPECT_EQ(shallowVolume->GetShape(), shallow);
+   EXPECT_EQ(deepVolume->GetShape(), deep);
+
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kTRUE), 1);
+   EXPECT_EQ(shallowVolume->GetShape(), shallow);
+   auto *deepReplacement = dynamic_cast<TGeoMultiUnion *>(deepVolume->GetShape());
+   ASSERT_NE(deepReplacement, nullptr);
+   EXPECT_EQ(deepReplacement->GetNumberOfSolids(), 10);
+
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kTRUE, 3), 1);
+   auto *shallowReplacement = dynamic_cast<TGeoMultiUnion *>(shallowVolume->GetShape());
+   ASSERT_NE(shallowReplacement, nullptr);
+   EXPECT_EQ(shallowReplacement->GetNumberOfSolids(), 4);
 }
