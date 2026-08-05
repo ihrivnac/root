@@ -143,10 +143,29 @@ TEST(TGeoMultiUnion, SafetyClassifiesEachNodeOnlyOnce)
    right.ResetCounts();
    const double outside[3] = {0., 0., 0.};
    EXPECT_NEAR(shape.Safety(outside, kFALSE), 3., kTol);
-   EXPECT_EQ(left.fContainsCalls, 1);
+   EXPECT_EQ(left.fContainsCalls, 0);
    EXPECT_EQ(left.fSafetyCalls, 1);
-   EXPECT_EQ(right.fContainsCalls, 1);
+   EXPECT_EQ(right.fContainsCalls, 0);
    EXPECT_EQ(right.fSafetyCalls, 1);
+}
+
+TEST(TGeoMultiUnion, SmallUnionSafetyUsesNodeBoxLowerBounds)
+{
+   CountingBox near(1., 1., 1.);
+   CountingBox far(1., 1., 1.);
+   TGeoTranslation nearTransform(4., 0., 0.);
+   TGeoTranslation farTransform(100., 0., 0.);
+   TGeoMultiUnion shape;
+   shape.AddNode(near, nearTransform);
+   shape.AddNode(far, farTransform);
+   shape.Voxelize();
+
+   const double outside[3] = {0., 0., 0.};
+   EXPECT_NEAR(shape.Safety(outside, kFALSE), 3., kTol);
+   EXPECT_EQ(near.fContainsCalls, 0);
+   EXPECT_EQ(near.fSafetyCalls, 1);
+   EXPECT_EQ(far.fContainsCalls, 0);
+   EXPECT_EQ(far.fSafetyCalls, 0);
 }
 
 TEST(TGeoMultiUnion, SafetyRejectsIncorrectInsideStateInOnePass)

@@ -16,6 +16,7 @@ ClassImp(TGeoMultiUnion);
 
 namespace {
 constexpr Int_t kBoxStride = 6;
+constexpr Int_t kSmallUnionNodeLimit = 9;
 
 Double_t PushDistance(Double_t distance)
 {
@@ -222,11 +223,28 @@ Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
 {
    Double_t result = TGeoShape::Big();
    Double_t local[3];
+   const Bool_t useSmallUnionFastPath = !in && GetNnodes() <= kSmallUnionNodeLimit && fVoxelized &&
+                                        fBoxes.size() == static_cast<std::size_t>(kBoxStride * GetNnodes());
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
       if (in && !AcceptNode(inode, point))
          continue;
+      Bool_t nodeCanContain = kTRUE;
+      if (useSmallUnionFastPath) {
+         const Double_t *box = &fBoxes[kBoxStride * inode];
+         const Double_t tolerance = TGeoShape::Tolerance();
+         Double_t boxSafety = 0.;
+         for (Int_t axis = 0; axis < 3; ++axis) {
+            const Double_t gap = std::max(box[2 * axis] - point[axis], point[axis] - box[2 * axis + 1]);
+            if (gap > tolerance) {
+               nodeCanContain = kFALSE;
+               boxSafety = std::max(boxSafety, gap - tolerance);
+            }
+         }
+         if (boxSafety >= result)
+            continue;
+      }
       GetMatrix(inode)->MasterToLocal(point, local);
-      const Bool_t nodeInside = GetShape(inode)->Contains(local);
+      const Bool_t nodeInside = nodeCanContain && GetShape(inode)->Contains(local);
       if (nodeInside) {
          if (!in)
             return 0.;
