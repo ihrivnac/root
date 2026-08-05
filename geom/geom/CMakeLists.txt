@@ -31,6 +31,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoManager.h
     TGeoMaterial.h
     TGeoMatrix.h
+    TGeoMultiUnion.h
     TGeoMedium.h
     TGeoNavigator.h
     TGeoNode.h
@@ -89,6 +90,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     src/TGeoManager.cxx
     src/TGeoMaterial.cxx
     src/TGeoMatrix.cxx
+    src/TGeoMultiUnion.cxx
     src/TGeoMedium.cxx
     src/TGeoNavigator.cxx
     src/TGeoNode.cxx

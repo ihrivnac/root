@@ -16,3 +16,15 @@ endif()
 ROOT_ADD_GTEST(tessellated
   test_tessellated.cxx
   LIBRARIES Geom)
+ROOT_ADD_GTEST(multiunion
+  test_multiunion.cxx
+  LIBRARIES Geom RIO)
+ROOT_ADD_GTEST(composite_optimize
+  test_composite_optimize.cxx
+  LIBRARIES Geom)
+ROOT_ADD_GTEST(manager_optimize_composites
+  test_manager_optimize_composites.cxx
+  LIBRARIES Geom)
+ROOT_ADD_GTEST(multiunion_geometry_equivalence
+  test_multiunion_geometry_equivalence.cxx
+  LIBRARIES Geom)

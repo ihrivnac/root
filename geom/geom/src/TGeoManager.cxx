@@ -237,8 +237,11 @@ in order to enhance rays.
 */
 
 #include <cstdlib>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "TROOT.h"
 #include "TGeoManager.h"
@@ -1620,6 +1623,86 @@ void TGeoManager::CloseGeometry(Option_t *option)
            GetTitle());
       Info("CloseGeometry", "----------------modeler ready----------------");
    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Analyze composite shapes used by logical volumes reachable from the top
+/// volume and report how many can be rewritten using TGeoMultiUnion.
+///
+/// Composite shapes that occur only as components of another composite are not
+/// processed. Each distinct placed composite shape is analyzed once, even when
+/// it is shared by several placed volumes. When replace is true, every reachable
+/// volume using an optimizable shape is updated to use the same optimized shape.
+/// Existing voxel finders are marked for lazy rebuilding.
+
+Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace)
+{
+   TGeoVolume *rootVolume = fMasterVolume ? fMasterVolume : fTopVolume;
+   if (!rootVolume) {
+      Info("OptimizeCompositeShapes", "Optimized 0 of 0 placed composite shapes%s",
+           replace ? " and replaced their volume references" : " (dry run)");
+      return 0;
+   }
+
+   std::vector<TGeoVolume *> pending{rootVolume};
+   std::vector<TGeoVolume *> placedVolumes;
+   std::unordered_set<TGeoVolume *> visitedVolumes;
+   std::vector<TGeoCompositeShape *> placedComposites;
+   std::vector<std::vector<TGeoVolume *>> compositeVolumes;
+   std::unordered_map<TGeoCompositeShape *, std::size_t> compositeIndices;
+
+   while (!pending.empty()) {
+      TGeoVolume *volume = pending.back();
+      pending.pop_back();
+      if (!volume || !visitedVolumes.insert(volume).second)
+         continue;
+      placedVolumes.push_back(volume);
+
+      if (auto *composite = dynamic_cast<TGeoCompositeShape *>(volume->GetShape())) {
+         auto inserted = compositeIndices.emplace(composite, placedComposites.size());
+         if (inserted.second) {
+            placedComposites.push_back(composite);
+            compositeVolumes.emplace_back();
+         }
+         compositeVolumes[inserted.first->second].push_back(volume);
+      }
+
+      for (Int_t inode = 0; inode < volume->GetNdaughters(); ++inode) {
+         TGeoNode *node = volume->GetNode(inode);
+         if (node)
+            pending.push_back(node->GetVolume());
+      }
+   }
+
+   Int_t optimized = 0;
+   for (std::size_t index = 0; index < placedComposites.size(); ++index) {
+      TGeoCompositeShape *composite = placedComposites[index];
+      if (!composite->CanOptimize())
+         continue;
+      ++optimized;
+      if (!replace)
+         continue;
+
+      TGeoShape *replacement = composite->Optimize();
+      if (replacement == composite)
+         continue;
+      for (TGeoVolume *volume : compositeVolumes[index])
+         volume->SetShape(replacement);
+      if (fMaxThreads > 0)
+         replacement->CreateThreadData(fMaxThreads);
+   }
+
+   if (replace && optimized) {
+      for (TGeoVolume *volume : placedVolumes) {
+         if (volume->GetVoxels())
+            volume->GetVoxels()->SetNeedRebuild();
+      }
+      ModifiedPad();
+   }
+
+   Info("OptimizeCompositeShapes", "Optimized %d of %zu placed composite shapes%s", optimized,
+        placedComposites.size(), replace ? " and replaced their volume references" : " (dry run)");
+   return optimized;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
