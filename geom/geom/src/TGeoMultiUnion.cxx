@@ -220,16 +220,21 @@ void TGeoMultiUnion::Contains_v(const Double_t *points, Bool_t *inside, Int_t ve
 
 Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
 {
-   if (Contains(point) != in)
-      return 0.;
    Double_t result = TGeoShape::Big();
    Double_t local[3];
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+      if (in && !AcceptNode(inode, point))
+         continue;
       GetMatrix(inode)->MasterToLocal(point, local);
       const Bool_t nodeInside = GetShape(inode)->Contains(local);
-      if (in && !nodeInside)
+      if (nodeInside) {
+         if (!in)
+            return 0.;
+         result = std::min(result, GetShape(inode)->Safety(local, kTRUE));
          continue;
-      result = std::min(result, GetShape(inode)->Safety(local, nodeInside));
+      }
+      if (!in)
+         result = std::min(result, GetShape(inode)->Safety(local, kFALSE));
    }
    return result == TGeoShape::Big() ? 0. : result;
 }

@@ -10,6 +10,32 @@
 
 namespace {
 constexpr double kTol = 1.e-9;
+
+class CountingBox : public TGeoBBox {
+public:
+   using TGeoBBox::TGeoBBox;
+
+   Bool_t Contains(const Double_t *point) const override
+   {
+      ++fContainsCalls;
+      return TGeoBBox::Contains(point);
+   }
+
+   Double_t Safety(const Double_t *point, Bool_t in = kTRUE) const override
+   {
+      ++fSafetyCalls;
+      return TGeoBBox::Safety(point, in);
+   }
+
+   void ResetCounts() const
+   {
+      fContainsCalls = 0;
+      fSafetyCalls = 0;
+   }
+
+   mutable int fContainsCalls = 0;
+   mutable int fSafetyCalls = 0;
+};
 } // namespace
 
 TEST(TGeoMultiUnion, DisjointNodes)
@@ -93,6 +119,61 @@ TEST(TGeoMultiUnion, RotatedNode)
    const double outsideShortAxis[3] = {4.5, 0., 0.};
    EXPECT_TRUE(shape.Contains(alongRotatedLongAxis));
    EXPECT_FALSE(shape.Contains(outsideShortAxis));
+}
+
+TEST(TGeoMultiUnion, SafetyClassifiesEachNodeOnlyOnce)
+{
+   CountingBox left(1., 1., 1.);
+   CountingBox right(1., 1., 1.);
+   TGeoTranslation leftTransform(-4., 0., 0.);
+   TGeoTranslation rightTransform(4., 0., 0.);
+   TGeoMultiUnion shape;
+   shape.AddNode(left, leftTransform);
+   shape.AddNode(right, rightTransform);
+   shape.Voxelize();
+
+   const double insideLeft[3] = {-4., 0., 0.};
+   EXPECT_NEAR(shape.Safety(insideLeft, kTRUE), 1., kTol);
+   EXPECT_EQ(left.fContainsCalls, 1);
+   EXPECT_EQ(left.fSafetyCalls, 1);
+   EXPECT_EQ(right.fContainsCalls, 0);
+   EXPECT_EQ(right.fSafetyCalls, 0);
+
+   left.ResetCounts();
+   right.ResetCounts();
+   const double outside[3] = {0., 0., 0.};
+   EXPECT_NEAR(shape.Safety(outside, kFALSE), 3., kTol);
+   EXPECT_EQ(left.fContainsCalls, 1);
+   EXPECT_EQ(left.fSafetyCalls, 1);
+   EXPECT_EQ(right.fContainsCalls, 1);
+   EXPECT_EQ(right.fSafetyCalls, 1);
+}
+
+TEST(TGeoMultiUnion, SafetyRejectsIncorrectInsideStateInOnePass)
+{
+   CountingBox first(1., 1., 1.);
+   CountingBox second(1., 1., 1.);
+   TGeoTranslation firstTransform(-4., 0., 0.);
+   TGeoTranslation secondTransform(4., 0., 0.);
+   TGeoMultiUnion shape;
+   shape.AddNode(first, firstTransform);
+   shape.AddNode(second, secondTransform);
+
+   const double insideFirst[3] = {-4., 0., 0.};
+   EXPECT_DOUBLE_EQ(shape.Safety(insideFirst, kFALSE), 0.);
+   EXPECT_EQ(first.fContainsCalls, 1);
+   EXPECT_EQ(first.fSafetyCalls, 0);
+   EXPECT_EQ(second.fContainsCalls, 0);
+   EXPECT_EQ(second.fSafetyCalls, 0);
+
+   first.ResetCounts();
+   second.ResetCounts();
+   const double outside[3] = {0., 0., 0.};
+   EXPECT_DOUBLE_EQ(shape.Safety(outside, kTRUE), 0.);
+   EXPECT_EQ(first.fContainsCalls, 1);
+   EXPECT_EQ(first.fSafetyCalls, 0);
+   EXPECT_EQ(second.fContainsCalls, 1);
+   EXPECT_EQ(second.fSafetyCalls, 0);
 }
 
 TEST(TGeoMultiUnion, StreamingRebuildsAccelerationData)
