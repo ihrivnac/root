@@ -8,15 +8,62 @@
 #include "TRandom3.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
+#include <functional>
 #include <limits>
+#include <numeric>
 
 ClassImp(TGeoMultiUnion);
 
 namespace {
 constexpr Int_t kBoxStride = 6;
 constexpr Int_t kSmallUnionNodeLimit = 9;
+constexpr std::size_t kBVHStackSize = 64;
+
+Bool_t ContainsBox(const Double_t *box, const Double_t *point)
+{
+   const Double_t tolerance = TGeoShape::Tolerance();
+   return point[0] >= box[0] - tolerance && point[0] <= box[1] + tolerance &&
+          point[1] >= box[2] - tolerance && point[1] <= box[3] + tolerance &&
+          point[2] >= box[4] - tolerance && point[2] <= box[5] + tolerance;
+}
+
+Double_t BoxSafety(const Double_t *box, const Double_t *point)
+{
+   Double_t result = 0.;
+   const Double_t tolerance = TGeoShape::Tolerance();
+   for (Int_t axis = 0; axis < 3; ++axis) {
+      const Double_t gap = std::max(box[2 * axis] - point[axis], point[axis] - box[2 * axis + 1]);
+      result = std::max(result, gap - tolerance);
+   }
+   return result;
+}
+
+Double_t BoxRayDistance(const Double_t *box, const Double_t *point, const Double_t *dir, Double_t step)
+{
+   Double_t enter = 0.;
+   Double_t leave = step;
+   for (Int_t axis = 0; axis < 3; ++axis) {
+      const Double_t lo = box[2 * axis];
+      const Double_t hi = box[2 * axis + 1];
+      if (std::abs(dir[axis]) < std::numeric_limits<Double_t>::epsilon()) {
+         if (point[axis] < lo || point[axis] > hi)
+            return TGeoShape::Big();
+         continue;
+      }
+      Double_t first = (lo - point[axis]) / dir[axis];
+      Double_t last = (hi - point[axis]) / dir[axis];
+      if (first > last)
+         std::swap(first, last);
+      enter = std::max(enter, first);
+      leave = std::min(leave, last);
+      if (enter > leave)
+         return TGeoShape::Big();
+   }
+   return leave >= 0. ? enter : TGeoShape::Big();
+}
 
 Double_t PushDistance(Double_t distance)
 {
@@ -75,7 +122,10 @@ void TGeoMultiUnion::AddNode(TGeoShape *shape, const TGeoMatrix *matrix)
    fShapes.Add(shape);
    fMatrices.Add(matrix ? new TGeoHMatrix(*matrix) : new TGeoHMatrix());
    fVoxelized = kFALSE;
+   fHasBVH = kFALSE;
    fBoxes.clear();
+   fBVHBoxes.clear();
+   fBVHChildren.clear();
    ComputeBBox();
 }
 
@@ -117,32 +167,78 @@ Bool_t TGeoMultiUnion::AcceptNode(Int_t inode, const Double_t *point) const
           point[1] <= box[3] + tol && point[2] >= box[4] - tol && point[2] <= box[5] + tol;
 }
 
+void TGeoMultiUnion::BuildBVH()
+{
+   fHasBVH = kFALSE;
+   fBVHBoxes.clear();
+   fBVHChildren.clear();
+   const Int_t nodeCount = GetNnodes();
+   if (nodeCount <= kSmallUnionNodeLimit ||
+       fBoxes.size() != static_cast<std::size_t>(kBoxStride * nodeCount))
+      return;
+
+   std::vector<Int_t> indices(nodeCount);
+   std::iota(indices.begin(), indices.end(), 0);
+   fBVHBoxes.reserve(kBoxStride * (2 * nodeCount - 1));
+   fBVHChildren.reserve(2 * (2 * nodeCount - 1));
+
+   std::function<Int_t(Int_t, Int_t)> build = [&](Int_t begin, Int_t end) {
+      const Int_t treeNode = static_cast<Int_t>(fBVHChildren.size() / 2);
+      fBVHChildren.resize(fBVHChildren.size() + 2, -1);
+      fBVHBoxes.resize(fBVHBoxes.size() + kBoxStride);
+      if (end - begin == 1) {
+         fBVHChildren[2 * treeNode + 1] = indices[begin];
+         std::copy_n(&fBoxes[kBoxStride * indices[begin]], kBoxStride, &fBVHBoxes[kBoxStride * treeNode]);
+         return treeNode;
+      }
+
+      Double_t centroidExtent[6] = {TGeoShape::Big(), -TGeoShape::Big(), TGeoShape::Big(),
+                                    -TGeoShape::Big(), TGeoShape::Big(), -TGeoShape::Big()};
+      for (Int_t position = begin; position < end; ++position) {
+         const Double_t *box = &fBoxes[kBoxStride * indices[position]];
+         for (Int_t axis = 0; axis < 3; ++axis) {
+            const Double_t center = box[2 * axis] + box[2 * axis + 1];
+            centroidExtent[2 * axis] = std::min(centroidExtent[2 * axis], center);
+            centroidExtent[2 * axis + 1] = std::max(centroidExtent[2 * axis + 1], center);
+         }
+      }
+      Int_t splitAxis = 0;
+      for (Int_t axis = 1; axis < 3; ++axis) {
+         if (centroidExtent[2 * axis + 1] - centroidExtent[2 * axis] >
+             centroidExtent[2 * splitAxis + 1] - centroidExtent[2 * splitAxis])
+            splitAxis = axis;
+      }
+      const Int_t middle = begin + (end - begin) / 2;
+      std::nth_element(indices.begin() + begin, indices.begin() + middle, indices.begin() + end,
+                       [&](Int_t first, Int_t second) {
+                          const Double_t *firstBox = &fBoxes[kBoxStride * first];
+                          const Double_t *secondBox = &fBoxes[kBoxStride * second];
+                          return firstBox[2 * splitAxis] + firstBox[2 * splitAxis + 1] <
+                                 secondBox[2 * splitAxis] + secondBox[2 * splitAxis + 1];
+                       });
+      const Int_t left = build(begin, middle);
+      const Int_t right = build(middle, end);
+      fBVHChildren[2 * treeNode] = left;
+      fBVHChildren[2 * treeNode + 1] = right;
+      Double_t *treeBox = &fBVHBoxes[kBoxStride * treeNode];
+      const Double_t *leftBox = &fBVHBoxes[kBoxStride * left];
+      const Double_t *rightBox = &fBVHBoxes[kBoxStride * right];
+      for (Int_t axis = 0; axis < 3; ++axis) {
+         treeBox[2 * axis] = std::min(leftBox[2 * axis], rightBox[2 * axis]);
+         treeBox[2 * axis + 1] = std::max(leftBox[2 * axis + 1], rightBox[2 * axis + 1]);
+      }
+      return treeNode;
+   };
+   build(0, nodeCount);
+   fHasBVH = kTRUE;
+}
+
 Bool_t TGeoMultiUnion::CrossesNodeBox(Int_t inode, const Double_t *point, const Double_t *dir, Double_t step) const
 {
    if (!fVoxelized || fBoxes.size() != static_cast<std::size_t>(kBoxStride * GetNnodes()))
       return kTRUE;
 
-   const Double_t *box = &fBoxes[kBoxStride * inode];
-   Double_t enter = 0.;
-   Double_t leave = step;
-   for (Int_t axis = 0; axis < 3; ++axis) {
-      const Double_t lo = box[2 * axis];
-      const Double_t hi = box[2 * axis + 1];
-      if (std::abs(dir[axis]) < std::numeric_limits<Double_t>::epsilon()) {
-         if (point[axis] < lo || point[axis] > hi)
-            return kFALSE;
-         continue;
-      }
-      Double_t first = (lo - point[axis]) / dir[axis];
-      Double_t last = (hi - point[axis]) / dir[axis];
-      if (first > last)
-         std::swap(first, last);
-      enter = std::max(enter, first);
-      leave = std::min(leave, last);
-      if (enter > leave)
-         return kFALSE;
-   }
-   return leave >= 0.;
+   return BoxRayDistance(&fBoxes[kBoxStride * inode], point, dir, step) < TGeoShape::Big();
 }
 
 void TGeoMultiUnion::Voxelize()
@@ -168,6 +264,7 @@ void TGeoMultiUnion::Voxelize()
       }
    }
    fVoxelized = kTRUE;
+   BuildBVH();
    ComputeBBox();
 }
 
@@ -179,10 +276,12 @@ void TGeoMultiUnion::ComputeBBox()
    }
 
    const Bool_t restoreVoxelized = fVoxelized;
+   const Bool_t restoreHasBVH = fHasBVH;
    if (fBoxes.size() != static_cast<std::size_t>(kBoxStride * GetNnodes())) {
       fVoxelized = kFALSE;
       Voxelize();
       fVoxelized = restoreVoxelized;
+      fHasBVH = restoreHasBVH;
    }
    Double_t extent[6] = {TGeoShape::Big(), -TGeoShape::Big(), TGeoShape::Big(),
                          -TGeoShape::Big(), TGeoShape::Big(), -TGeoShape::Big()};
@@ -203,6 +302,27 @@ void TGeoMultiUnion::ComputeBBox()
 Bool_t TGeoMultiUnion::Contains(const Double_t *point) const
 {
    Double_t local[3];
+   if (HasBVH()) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         if (!ContainsBox(&fBVHBoxes[kBoxStride * treeNode], point))
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left < 0) {
+            GetMatrix(right)->MasterToLocal(point, local);
+            if (GetShape(right)->Contains(local))
+               return kTRUE;
+            continue;
+         }
+         stack[stackSize++] = right;
+         stack[stackSize++] = left;
+      }
+      return kFALSE;
+   }
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
       if (!AcceptNode(inode, point))
          continue;
@@ -223,6 +343,35 @@ Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
 {
    Double_t result = TGeoShape::Big();
    Double_t local[3];
+   if (HasBVH()) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         const Double_t *treeBox = &fBVHBoxes[kBoxStride * treeNode];
+         if ((in && !ContainsBox(treeBox, point)) || (!in && BoxSafety(treeBox, point) >= result))
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            stack[stackSize++] = right;
+            stack[stackSize++] = left;
+            continue;
+         }
+         const Bool_t nodeCanContain = ContainsBox(treeBox, point);
+         GetMatrix(right)->MasterToLocal(point, local);
+         const Bool_t nodeInside = nodeCanContain && GetShape(right)->Contains(local);
+         if (nodeInside) {
+            if (!in)
+               return 0.;
+            result = std::min(result, GetShape(right)->Safety(local, kTRUE));
+         } else if (!in) {
+            result = std::min(result, GetShape(right)->Safety(local, kFALSE));
+         }
+      }
+      return result == TGeoShape::Big() ? 0. : result;
+   }
    const Bool_t useSmallUnionFastPath = !in && GetNnodes() <= kSmallUnionNodeLimit && fVoxelized &&
                                         fBoxes.size() == static_cast<std::size_t>(kBoxStride * GetNnodes());
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
@@ -278,6 +427,27 @@ Double_t TGeoMultiUnion::DistFromOutside(const Double_t *point, const Double_t *
 
    Double_t result = TGeoShape::Big();
    Double_t local[3], localDir[3];
+   if (HasBVH()) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         const Double_t limit = std::min(step, result);
+         if (BoxRayDistance(&fBVHBoxes[kBoxStride * treeNode], point, dir, limit) >= limit)
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            stack[stackSize++] = right;
+            stack[stackSize++] = left;
+            continue;
+         }
+         TransformToNode(right, point, dir, local, localDir);
+         result = std::min(result, GetShape(right)->DistFromOutside(local, localDir, 3, limit));
+      }
+      return result < step ? result : TGeoShape::Big();
+   }
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
       if (!CrossesNodeBox(inode, point, dir, std::min(step, result)))
          continue;
@@ -312,12 +482,33 @@ Double_t TGeoMultiUnion::DistFromInside(const Double_t *point, const Double_t *d
    for (Int_t iteration = 0; iteration < maxIterations; ++iteration) {
       Double_t next = TGeoShape::Big();
       Double_t local[3], localDir[3];
-      for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
-         if (!AcceptNode(inode, current))
-            continue;
-         TransformToNode(inode, current, dir, local, localDir);
-         if (GetShape(inode)->Contains(local))
-            next = std::min(next, GetShape(inode)->DistFromInside(local, localDir, 3));
+      if (HasBVH()) {
+         std::array<Int_t, kBVHStackSize> stack;
+         std::size_t stackSize = 1;
+         stack[0] = 0;
+         while (stackSize) {
+            const Int_t treeNode = stack[--stackSize];
+            if (!ContainsBox(&fBVHBoxes[kBoxStride * treeNode], current))
+               continue;
+            const Int_t left = fBVHChildren[2 * treeNode];
+            const Int_t right = fBVHChildren[2 * treeNode + 1];
+            if (left >= 0) {
+               stack[stackSize++] = right;
+               stack[stackSize++] = left;
+               continue;
+            }
+            TransformToNode(right, current, dir, local, localDir);
+            if (GetShape(right)->Contains(local))
+               next = std::min(next, GetShape(right)->DistFromInside(local, localDir, 3));
+         }
+      } else {
+         for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+            if (!AcceptNode(inode, current))
+               continue;
+            TransformToNode(inode, current, dir, local, localDir);
+            if (GetShape(inode)->Contains(local))
+               next = std::min(next, GetShape(inode)->DistFromInside(local, localDir, 3));
+         }
       }
       if (next == TGeoShape::Big())
          return travelled;

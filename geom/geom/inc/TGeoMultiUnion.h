@@ -21,13 +21,18 @@ private:
    TObjArray fShapes;              // Constituent shapes (not owned)
    TObjArray fMatrices;            //-> Constituent transformations (owned)
    Bool_t fVoxelized{kFALSE};      // Whether the acceleration data is current
+   Bool_t fHasBVH{kFALSE};         ///<! Whether the transient BVH is current
    std::vector<Double_t> fBoxes;   ///<! Node AABBs: xmin,xmax,ymin,ymax,zmin,zmax
+   std::vector<Double_t> fBVHBoxes;   ///<! BVH node AABBs
+   std::vector<Int_t> fBVHChildren;   ///<! BVH children; leaves store {-1, shape index}
 
    TGeoMultiUnion(const TGeoMultiUnion &) = delete;
    TGeoMultiUnion &operator=(const TGeoMultiUnion &) = delete;
 
    Bool_t AcceptNode(Int_t inode, const Double_t *point) const;
+   void BuildBVH();
    Bool_t CrossesNodeBox(Int_t inode, const Double_t *point, const Double_t *dir, Double_t step) const;
+   Bool_t HasBVH() const { return fHasBVH; }
    void TransformToNode(Int_t inode, const Double_t *point, const Double_t *dir, Double_t *local,
                         Double_t *localDir) const;
 
@@ -67,6 +72,7 @@ public:
    TGeoShape *GetMakeRuntimeShape(TGeoShape *, TGeoMatrix *) const override { return nullptr; }
    void InspectShape() const override;
    Bool_t IsConvex() const final { return kFALSE; }
+   Bool_t IsBVHEnabled() const { return HasBVH(); }
    Bool_t IsCylType() const override { return kFALSE; }
    Bool_t IsVoxelized() const { return fVoxelized; }
    Double_t Safety(const Double_t *point, Bool_t in = kTRUE) const override;
@@ -75,7 +81,7 @@ public:
    void SetDimensions(Double_t *) override {}
    void Voxelize();
 
-   ClassDefOverride(TGeoMultiUnion, 1) // Multi-union shape
+   ClassDefOverride(TGeoMultiUnion, 2) // Multi-union shape
 };
 
 #endif

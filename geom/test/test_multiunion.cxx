@@ -7,6 +7,7 @@
 #include <TGeoMultiUnion.h>
 
 #include <memory>
+#include <vector>
 
 namespace {
 constexpr double kTol = 1.e-9;
@@ -168,6 +169,44 @@ TEST(TGeoMultiUnion, SmallUnionSafetyUsesNodeBoxLowerBounds)
    EXPECT_EQ(far.fSafetyCalls, 0);
 }
 
+TEST(TGeoMultiUnion, LargeUnionUsesBVH)
+{
+   std::vector<std::unique_ptr<CountingBox>> boxes;
+   std::vector<std::unique_ptr<TGeoTranslation>> transforms;
+   TGeoMultiUnion shape;
+   for (int index = 0; index < 16; ++index) {
+      boxes.emplace_back(std::make_unique<CountingBox>(1., 1., 1.));
+      transforms.emplace_back(std::make_unique<TGeoTranslation>(10. * (index + 1), 0., 0.));
+      shape.AddNode(*boxes.back(), *transforms.back());
+   }
+   EXPECT_FALSE(shape.IsBVHEnabled());
+   shape.Voxelize();
+
+   EXPECT_TRUE(shape.IsBVHEnabled());
+   const double outside[3] = {0., 0., 0.};
+   EXPECT_NEAR(shape.Safety(outside, kFALSE), 9., kTol);
+   int safetyCalls = 0;
+   int containsCalls = 0;
+   for (const auto &box : boxes) {
+      safetyCalls += box->fSafetyCalls;
+      containsCalls += box->fContainsCalls;
+   }
+   EXPECT_EQ(safetyCalls, 1);
+   EXPECT_EQ(containsCalls, 0);
+
+   for (const auto &box : boxes)
+      box->ResetCounts();
+   const double insideLast[3] = {160., 0., 0.};
+   EXPECT_TRUE(shape.Contains(insideLast));
+   containsCalls = 0;
+   for (const auto &box : boxes)
+      containsCalls += box->fContainsCalls;
+   EXPECT_EQ(containsCalls, 1);
+
+   const double plusX[3] = {1., 0., 0.};
+   EXPECT_NEAR(shape.DistFromOutside(outside, plusX, 3), 9., kTol);
+}
+
 TEST(TGeoMultiUnion, SafetyRejectsIncorrectInsideStateInOnePass)
 {
    CountingBox first(1., 1., 1.);
@@ -197,11 +236,16 @@ TEST(TGeoMultiUnion, SafetyRejectsIncorrectInsideStateInOnePass)
 
 TEST(TGeoMultiUnion, StreamingRebuildsAccelerationData)
 {
-   TGeoBBox box(1., 1., 1.);
-   TGeoTranslation transform(3., 0., 0.);
+   std::vector<std::unique_ptr<TGeoBBox>> boxes;
+   std::vector<std::unique_ptr<TGeoTranslation>> transforms;
    TGeoMultiUnion original;
-   original.AddNode(box, transform);
+   for (int index = 0; index < 12; ++index) {
+      boxes.emplace_back(std::make_unique<TGeoBBox>(1., 1., 1.));
+      transforms.emplace_back(std::make_unique<TGeoTranslation>(3. * index, 0., 0.));
+      original.AddNode(*boxes.back(), *transforms.back());
+   }
    original.Voxelize();
+   ASSERT_TRUE(original.IsBVHEnabled());
 
    TBufferFile buffer(TBuffer::kWrite);
    buffer.WriteObjectAny(&original, TGeoMultiUnion::Class());
@@ -213,7 +257,8 @@ TEST(TGeoMultiUnion, StreamingRebuildsAccelerationData)
    ASSERT_NE(restored, nullptr);
    restored->AfterStreamer();
    EXPECT_TRUE(restored->IsVoxelized());
-   EXPECT_EQ(restored->GetNnodes(), 1);
-   const double center[3] = {3., 0., 0.};
+   EXPECT_TRUE(restored->IsBVHEnabled());
+   EXPECT_EQ(restored->GetNnodes(), 12);
+   const double center[3] = {33., 0., 0.};
    EXPECT_TRUE(restored->Contains(center));
 }
