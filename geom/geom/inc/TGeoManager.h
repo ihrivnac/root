@@ -295,6 +295,7 @@ public:
    void BuildDefaultMaterials();
    void CloseGeometry(Option_t *option = "d");
    Bool_t IsClosed() const { return fClosed; }
+   Int_t OptimizeCompositeShapes(Bool_t replace = kFALSE, Int_t minimumLeaves = 0);
    TGeoVolume *MakeArb8(const char *name, TGeoMedium *medium, Double_t dz, Double_t *vertices = nullptr);
    TGeoVolume *MakeBox(const char *name, TGeoMedium *medium, Double_t dx, Double_t dy, Double_t dz);
    TGeoVolume *MakeCone(const char *name, TGeoMedium *medium, Double_t dz, Double_t rmin1, Double_t rmax1,

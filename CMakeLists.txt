@@ -307,8 +307,8 @@ endif()
 get_cmake_property(variables CACHE_VARIABLES)
 foreach(var ${variables})
   if((var MATCHES "_(LIBRARIES|LIBRARY|INCLUDE|VERSION)") AND
-     (NOT ${${var}} STREQUAL "") AND
-     (NOT ${var} MATCHES "NOTFOUND"))
+     (NOT "${${var}}" STREQUAL "") AND
+     (NOT "${var}" MATCHES "NOTFOUND"))
     if (var MATCHES "^QT_")
       # filter out the very long list of Qt libraries and include dirs
       if (var MATCHES "(QT_LIBRARY_DIR|QT_QTCORE_INCLUDE_DIR)")
