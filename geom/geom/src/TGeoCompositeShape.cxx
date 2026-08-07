@@ -193,6 +193,8 @@ criteria. Volumes created based on composite shapes cannot be divided.
 #include "TBuffer3DTypes.h"
 
 #include "TGeoCompositeShape.h"
+#include "TGeoMultiDifference.h"
+
 ClassImp(TGeoCompositeShape);
 
 #include <algorithm>
@@ -284,19 +286,35 @@ TGeoMultiUnion *MakeMultiUnion(const TString &name, const MultiUnionTerms &terms
    return multiUnion;
 }
 
-Bool_t AnalyzeOptimization(TGeoCompositeShape *shape, MultiUnionTerms &positive, MultiUnionTerms &negative,
-                           Int_t minimumLeaves)
+TGeoMultiDifference *MakeMultiDifference(const TString &name, const MultiUnionTerms &positive,
+                                         const MultiUnionTerms &negative)
 {
-   const auto threshold = static_cast<std::size_t>(std::max(3, minimumLeaves));
+   auto *difference = new TGeoMultiDifference(name);
+   for (const auto &term : positive)
+      difference->AddPositiveNode(term.fShape, &term.fMatrix);
+   for (const auto &term : negative)
+      difference->AddNegativeNode(term.fShape, &term.fMatrix);
+   difference->Voxelize();
+   return difference;
+}
+
+Bool_t AnalyzeOptimization(TGeoCompositeShape *shape, MultiUnionTerms &positive, MultiUnionTerms &negative,
+                           Int_t minimumLeaves, Int_t minimumMultiDifferenceLeaves)
+{
+   const auto unionThreshold = static_cast<std::size_t>(std::max(3, minimumLeaves));
+   const auto multiDifferenceThreshold = static_cast<std::size_t>(
+      minimumMultiDifferenceLeaves < 0 ? unionThreshold : std::max(3, minimumMultiDifferenceLeaves));
    TGeoHMatrix identity;
    Bool_t hasComposite = kFALSE;
    if (CollectUnionTerms(shape, identity, positive, hasComposite))
-      return hasComposite && positive.size() >= threshold;
+      return hasComposite && positive.size() >= unionThreshold;
 
    positive.clear();
    hasComposite = kFALSE;
-   return CollectDifferenceTerms(shape, identity, positive, negative, hasComposite) && hasComposite &&
-          !negative.empty() && positive.size() + negative.size() >= threshold;
+   if (!CollectDifferenceTerms(shape, identity, positive, negative, hasComposite) || !hasComposite || negative.empty())
+      return kFALSE;
+   const auto threshold = positive.size() > 1 ? multiDifferenceThreshold : unionThreshold;
+   return positive.size() + negative.size() >= threshold;
 }
 
 } // namespace
@@ -533,8 +551,7 @@ void TGeoCompositeShape::MakeNode(const char *expression)
 /// represented as one of the following forms:
 ///
 ///  - a union of leaves;
-///  - a leaf minus a union of leaves;
-///  - a union of leaves minus a union of leaves.
+///  - a difference between positive and negative sets of leaves.
 ///
 /// Nested transformations are accumulated into the multi-union nodes. The
 /// rewrite is deliberately conservative: intersections and a subtraction on
@@ -543,30 +560,25 @@ void TGeoCompositeShape::MakeNode(const char *expression)
 /// this object is returned. The optimized result is a newly allocated shape
 /// registered with the current TGeoManager, as for other named TGeo shapes.
 
-TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves)
+TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves, Int_t minimumMultiDifferenceLeaves)
 {
    if (!fNode)
       return this;
 
    MultiUnionTerms positive;
    MultiUnionTerms negative;
-   if (!AnalyzeOptimization(this, positive, negative, minimumLeaves))
+   if (!AnalyzeOptimization(this, positive, negative, minimumLeaves, minimumMultiDifferenceLeaves))
       return this;
    if (negative.empty())
       return MakeMultiUnion(OptimizedName(*this, "multiunion"), positive);
+   if (positive.size() > 1)
+      return MakeMultiDifference(OptimizedName(*this, "multidifference"), positive, negative);
 
-   TGeoShape *left = nullptr;
    TGeoMatrix *leftMatrix = nullptr;
-   if (positive.size() == 1) {
-      left = positive.front().fShape;
-      if (!positive.front().fMatrix.IsIdentity())
-         leftMatrix = new TGeoHMatrix(positive.front().fMatrix);
-   } else {
-      left = MakeMultiUnion(OptimizedName(*this, "positive"), positive);
-   }
-
+   if (!positive.front().fMatrix.IsIdentity())
+      leftMatrix = new TGeoHMatrix(positive.front().fMatrix);
    TGeoShape *right = MakeMultiUnion(OptimizedName(*this, "negative"), negative);
-   auto *node = new TGeoSubtraction(left, right, leftMatrix, nullptr);
+   auto *node = new TGeoSubtraction(positive.front().fShape, right, leftMatrix, nullptr);
    return new TGeoCompositeShape(OptimizedName(*this, "optimized"), node);
 }
 
@@ -574,13 +586,14 @@ TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves)
 /// Return whether Optimize() can replace this shape without constructing the
 /// replacement. This is used for side-effect-free geometry-wide dry runs.
 
-Bool_t TGeoCompositeShape::CanOptimize(Int_t minimumLeaves) const
+Bool_t TGeoCompositeShape::CanOptimize(Int_t minimumLeaves, Int_t minimumMultiDifferenceLeaves) const
 {
    if (!fNode)
       return kFALSE;
    MultiUnionTerms positive;
    MultiUnionTerms negative;
-   return AnalyzeOptimization(const_cast<TGeoCompositeShape *>(this), positive, negative, minimumLeaves);
+   return AnalyzeOptimization(const_cast<TGeoCompositeShape *>(this), positive, negative, minimumLeaves,
+                              minimumMultiDifferenceLeaves);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

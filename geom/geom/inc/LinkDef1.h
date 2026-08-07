@@ -74,6 +74,7 @@
 #pragma link C++ class TGeoTrd2 + ;
 #pragma link C++ class TGeoCompositeShape + ;
 #pragma link C++ class TGeoMultiUnion + ;
+#pragma link C++ class TGeoMultiDifference + ;
 #pragma link C++ class TGeoPolygon + ;
 #pragma link C++ class TGeoXtru + ;
 #pragma link C++ class ROOT::Geom::Vertex_t + ;

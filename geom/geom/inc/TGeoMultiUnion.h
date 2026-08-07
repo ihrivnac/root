@@ -9,6 +9,7 @@
 #include <vector>
 
 class TGeoMatrix;
+class TGeoMultiDifference;
 
 /// A Boolean union of an arbitrary number of transformed TGeoShape objects.
 ///
@@ -17,6 +18,8 @@ class TGeoMatrix;
 /// used to reject irrelevant shapes during navigation. Constituent shapes are
 /// not owned. Transformation matrices are copied and owned by the multi-union.
 class TGeoMultiUnion : public TGeoBBox {
+   friend class TGeoMultiDifference;
+
 private:
    TObjArray fShapes;              // Constituent shapes (not owned)
    TObjArray fMatrices;            //-> Constituent transformations (owned)
@@ -25,6 +28,9 @@ private:
    std::vector<Double_t> fBoxes;   ///<! Node AABBs: xmin,xmax,ymin,ymax,zmin,zmax
    std::vector<Double_t> fBVHBoxes;   ///<! BVH node AABBs
    std::vector<Int_t> fBVHChildren;   ///<! BVH children; leaves store {-1, shape index}
+   std::vector<UChar_t> fNodeFlags;   ///<! Primitive and transformation fast-path flags
+   std::vector<Double_t> fNodeTranslations;   ///<! Cached node translations
+   std::vector<Double_t> fNodeParameters;   ///<! Cached box/tube parameters
 
    TGeoMultiUnion(const TGeoMultiUnion &) = delete;
    TGeoMultiUnion &operator=(const TGeoMultiUnion &) = delete;
@@ -33,6 +39,12 @@ private:
    void BuildBVH();
    Bool_t CrossesNodeBox(Int_t inode, const Double_t *point, const Double_t *dir, Double_t step) const;
    Bool_t HasBVH() const { return fHasBVH; }
+   Bool_t NodeContains(Int_t inode, const Double_t *local) const;
+   Double_t NodeDistFromInside(Int_t inode, const Double_t *local, const Double_t *localDir) const;
+   Double_t NodeDistFromOutside(Int_t inode, const Double_t *local, const Double_t *localDir, Double_t step) const;
+   Double_t NodeSafety(Int_t inode, const Double_t *local, Bool_t in) const;
+   void TransformDirectionToNode(Int_t inode, const Double_t *dir, Double_t *localDir) const;
+   void TransformPointToNode(Int_t inode, const Double_t *point, Double_t *local) const;
    void TransformToNode(Int_t inode, const Double_t *point, const Double_t *dir, Double_t *local,
                         Double_t *localDir) const;
 
@@ -71,7 +83,7 @@ public:
    TGeoMatrix *GetTransformation(Int_t inode) const { return GetMatrix(inode); }
    TGeoShape *GetMakeRuntimeShape(TGeoShape *, TGeoMatrix *) const override { return nullptr; }
    void InspectShape() const override;
-   Bool_t IsConvex() const { return kFALSE; }
+   Bool_t IsConvex() const final { return kFALSE; }
    Bool_t IsBVHEnabled() const { return HasBVH(); }
    Bool_t IsCylType() const override { return kFALSE; }
    Bool_t IsVoxelized() const { return fVoxelized; }

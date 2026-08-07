@@ -4,6 +4,7 @@
 #include <TClass.h>
 #include <TGeoBBox.h>
 #include <TGeoMatrix.h>
+#include <TGeoMultiDifference.h>
 #include <TGeoMultiUnion.h>
 
 #include <memory>
@@ -169,6 +170,27 @@ TEST(TGeoMultiUnion, SmallUnionSafetyUsesNodeBoxLowerBounds)
    EXPECT_EQ(far.fSafetyCalls, 0);
 }
 
+TEST(TGeoMultiUnion, ThreeNodeUnionUsesBalancedBVH)
+{
+   TGeoBBox box(1., 1., 1.);
+   TGeoTranslation left(-5., 0., 0.);
+   TGeoTranslation center(0., 0., 0.);
+   TGeoTranslation right(5., 0., 0.);
+   TGeoMultiUnion shape;
+   shape.AddNode(box, left);
+   shape.AddNode(box, center);
+   shape.AddNode(box, right);
+   EXPECT_FALSE(shape.IsBVHEnabled());
+   shape.Voxelize();
+
+   EXPECT_TRUE(shape.IsBVHEnabled());
+   const double inside[3] = {5., 0., 0.};
+   const double outside[3] = {2.5, 0., 0.};
+   EXPECT_TRUE(shape.Contains(inside));
+   EXPECT_FALSE(shape.Contains(outside));
+   EXPECT_NEAR(shape.Safety(outside, kFALSE), 1.5, kTol);
+}
+
 TEST(TGeoMultiUnion, LargeUnionUsesBVH)
 {
    std::vector<std::unique_ptr<CountingBox>> boxes;
@@ -261,4 +283,50 @@ TEST(TGeoMultiUnion, StreamingRebuildsAccelerationData)
    EXPECT_EQ(restored->GetNnodes(), 12);
    const double center[3] = {33., 0., 0.};
    EXPECT_TRUE(restored->Contains(center));
+}
+
+TEST(TGeoMultiDifference, NavigatesPositiveAndNegativeBVHsAndStreams)
+{
+   TGeoBBox positive(2., 2., 2.);
+   TGeoBBox hole(.5, .5, 3.);
+   TGeoTranslation left(-3., 0., 0.);
+   TGeoTranslation right(3., 0., 0.);
+   TGeoMultiDifference original("multi_difference");
+   original.AddPositiveNode(positive, left);
+   original.AddPositiveNode(positive, right);
+   original.AddNegativeNode(hole, left);
+   original.AddNegativeNode(hole, right);
+   original.Voxelize();
+
+   ASSERT_TRUE(original.IsBVHEnabled());
+   EXPECT_EQ(original.GetNpositive(), 2);
+   EXPECT_EQ(original.GetNnegative(), 2);
+   const double inSolid[3] = {-3., 1., 0.};
+   const double inHole[3] = {-3., 0., 0.};
+   const double minusY[3] = {0., -1., 0.};
+   const double plusY[3] = {0., 1., 0.};
+   EXPECT_TRUE(original.Contains(inSolid));
+   EXPECT_FALSE(original.Contains(inHole));
+   EXPECT_NEAR(original.Safety(inSolid, kTRUE), .5, kTol);
+   EXPECT_NEAR(original.Safety(inHole, kFALSE), .5, kTol);
+   EXPECT_NEAR(original.DistFromInside(inSolid, minusY, 3), .5, kTol);
+   EXPECT_NEAR(original.DistFromOutside(inHole, plusY, 3), .5, kTol);
+
+   TBufferFile buffer(TBuffer::kWrite);
+   buffer.WriteObjectAny(&original, TGeoMultiDifference::Class());
+   buffer.SetReadMode();
+   buffer.SetBufferOffset(0);
+   std::unique_ptr<TGeoMultiDifference> restored(
+      static_cast<TGeoMultiDifference *>(buffer.ReadObjectAny(TGeoMultiDifference::Class())));
+
+   ASSERT_NE(restored, nullptr);
+   restored->AfterStreamer();
+   EXPECT_TRUE(restored->IsVoxelized());
+   EXPECT_TRUE(restored->IsBVHEnabled());
+   EXPECT_EQ(restored->GetNpositive(), 2);
+   EXPECT_EQ(restored->GetNnegative(), 2);
+   EXPECT_TRUE(restored->Contains(inSolid));
+   EXPECT_FALSE(restored->Contains(inHole));
+   EXPECT_NEAR(restored->DistFromInside(inSolid, minusY, 3), .5, kTol);
+   EXPECT_NEAR(restored->DistFromOutside(inHole, plusY, 3), .5, kTol);
 }

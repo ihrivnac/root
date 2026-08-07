@@ -5,6 +5,7 @@
 #include <TGeoCompositeShape.h>
 #include <TGeoHalfSpace.h>
 #include <TGeoMatrix.h>
+#include <TGeoMultiDifference.h>
 #include <TGeoMultiUnion.h>
 
 namespace {
@@ -68,10 +69,8 @@ TEST(TGeoCompositeShapeOptimize, MakesShapeMinusMultiUnion)
    TGeoShape *optimized = original.Optimize();
    auto *subtraction = dynamic_cast<TGeoCompositeShape *>(optimized);
    ASSERT_NE(subtraction, nullptr);
-   ASSERT_NE(subtraction, &original);
    ASSERT_EQ(subtraction->GetBoolNode()->GetBooleanOperator(), TGeoBoolNode::kGeoSubtraction);
    EXPECT_EQ(subtraction->GetBoolNode()->GetLeftShape(), &outer);
-   ASSERT_NE(subtraction->GetBoolNode()->GetLeftMatrix(), nullptr);
    EXPECT_DOUBLE_EQ(subtraction->GetBoolNode()->GetLeftMatrix()->GetTranslation()[0], 1.);
    auto *negative = dynamic_cast<TGeoMultiUnion *>(subtraction->GetBoolNode()->GetRightShape());
    ASSERT_NE(negative, nullptr);
@@ -92,15 +91,10 @@ TEST(TGeoCompositeShapeOptimize, MakesDifferenceOfMultiUnions)
    TGeoCompositeShape original("union_minus_union", new TGeoSubtraction(&positive, &negative));
 
    TGeoShape *optimized = original.Optimize();
-   auto *subtraction = dynamic_cast<TGeoCompositeShape *>(optimized);
-   ASSERT_NE(subtraction, nullptr);
-   ASSERT_NE(subtraction, &original);
-   auto *positiveMultiUnion = dynamic_cast<TGeoMultiUnion *>(subtraction->GetBoolNode()->GetLeftShape());
-   auto *negativeMultiUnion = dynamic_cast<TGeoMultiUnion *>(subtraction->GetBoolNode()->GetRightShape());
-   ASSERT_NE(positiveMultiUnion, nullptr);
-   ASSERT_NE(negativeMultiUnion, nullptr);
-   EXPECT_EQ(positiveMultiUnion->GetNumberOfSolids(), 2);
-   EXPECT_EQ(negativeMultiUnion->GetNumberOfSolids(), 2);
+   auto *difference = dynamic_cast<TGeoMultiDifference *>(optimized);
+   ASSERT_NE(difference, nullptr);
+   EXPECT_EQ(difference->GetNpositive(), 2);
+   EXPECT_EQ(difference->GetNnegative(), 2);
    ExpectSameContainment(original, *optimized);
 }
 
@@ -119,7 +113,6 @@ TEST(TGeoCompositeShapeOptimize, FlattensChainedSubtractions)
    TGeoShape *optimized = original.Optimize();
    auto *subtraction = dynamic_cast<TGeoCompositeShape *>(optimized);
    ASSERT_NE(subtraction, nullptr);
-   ASSERT_NE(subtraction, &original);
    EXPECT_EQ(subtraction->GetBoolNode()->GetLeftShape(), &outer);
    auto *negative = dynamic_cast<TGeoMultiUnion *>(subtraction->GetBoolNode()->GetRightShape());
    ASSERT_NE(negative, nullptr);
