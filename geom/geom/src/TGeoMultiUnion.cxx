@@ -4,6 +4,7 @@
 
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
+#include "TGeoTube.h"
 #include "TGeoVolume.h"
 #include "TRandom3.h"
 
@@ -14,13 +15,20 @@
 #include <functional>
 #include <limits>
 #include <numeric>
+#include <typeinfo>
 
 ClassImp(TGeoMultiUnion);
 
 namespace {
 constexpr Int_t kBoxStride = 6;
-constexpr Int_t kSmallUnionNodeLimit = 9;
+constexpr Int_t kSmallUnionNodeLimit = 2;
 constexpr std::size_t kBVHStackSize = 64;
+constexpr Int_t kNodeParameterStride = 6;
+constexpr UChar_t kPrimitiveMask = 0x3;
+constexpr UChar_t kGenericNode = 0;
+constexpr UChar_t kBoxNode = 1;
+constexpr UChar_t kTubeNode = 2;
+constexpr UChar_t kRotatedNode = 0x4;
 
 Bool_t ContainsBox(const Double_t *box, const Double_t *point)
 {
@@ -126,6 +134,9 @@ void TGeoMultiUnion::AddNode(TGeoShape *shape, const TGeoMatrix *matrix)
    fBoxes.clear();
    fBVHBoxes.clear();
    fBVHChildren.clear();
+   fNodeFlags.clear();
+   fNodeTranslations.clear();
+   fNodeParameters.clear();
    ComputeBBox();
 }
 
@@ -151,10 +162,102 @@ TGeoMatrix *TGeoMultiUnion::GetMatrix(Int_t inode) const
 void TGeoMultiUnion::TransformToNode(Int_t inode, const Double_t *point, const Double_t *dir, Double_t *local,
                                      Double_t *localDir) const
 {
-   const auto *matrix = GetMatrix(inode);
-   matrix->MasterToLocal(point, local);
+   TransformPointToNode(inode, point, local);
    if (dir)
-      matrix->MasterToLocalVect(dir, localDir);
+      TransformDirectionToNode(inode, dir, localDir);
+}
+
+void TGeoMultiUnion::TransformPointToNode(Int_t inode, const Double_t *point, Double_t *local) const
+{
+   if (fNodeFlags.size() == static_cast<std::size_t>(GetNnodes()) && !(fNodeFlags[inode] & kRotatedNode)) {
+      const Double_t *translation = &fNodeTranslations[3 * inode];
+      local[0] = point[0] - translation[0];
+      local[1] = point[1] - translation[1];
+      local[2] = point[2] - translation[2];
+      return;
+   }
+   GetMatrix(inode)->MasterToLocal(point, local);
+}
+
+void TGeoMultiUnion::TransformDirectionToNode(Int_t inode, const Double_t *dir, Double_t *localDir) const
+{
+   if (fNodeFlags.size() == static_cast<std::size_t>(GetNnodes()) && !(fNodeFlags[inode] & kRotatedNode)) {
+      std::memcpy(localDir, dir, 3 * sizeof(Double_t));
+      return;
+   }
+   GetMatrix(inode)->MasterToLocalVect(dir, localDir);
+}
+
+Bool_t TGeoMultiUnion::NodeContains(Int_t inode, const Double_t *local) const
+{
+   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+      return GetShape(inode)->Contains(local);
+   const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
+   switch (fNodeFlags[inode] & kPrimitiveMask) {
+   case kBoxNode:
+      return std::abs(local[0] - parameters[3]) <= parameters[0] &&
+             std::abs(local[1] - parameters[4]) <= parameters[1] &&
+             std::abs(local[2] - parameters[5]) <= parameters[2];
+   case kTubeNode: {
+      if (std::abs(local[2]) > parameters[2])
+         return kFALSE;
+      const Double_t radiusSquared = local[0] * local[0] + local[1] * local[1];
+      return radiusSquared >= parameters[0] * parameters[0] && radiusSquared <= parameters[1] * parameters[1];
+   }
+   default:
+      return GetShape(inode)->Contains(local);
+   }
+}
+
+Double_t TGeoMultiUnion::NodeSafety(Int_t inode, const Double_t *local, Bool_t in) const
+{
+   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+      return GetShape(inode)->Safety(local, in);
+   const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
+   switch (fNodeFlags[inode] & kPrimitiveMask) {
+   case kBoxNode: {
+      const Double_t sx = parameters[0] - std::abs(local[0] - parameters[3]);
+      const Double_t sy = parameters[1] - std::abs(local[1] - parameters[4]);
+      const Double_t sz = parameters[2] - std::abs(local[2] - parameters[5]);
+      return in ? std::min({sx, sy, sz}) : std::max({-sx, -sy, -sz});
+   }
+   case kTubeNode:
+      return TGeoTube::SafetyS(local, in, parameters[0], parameters[1], parameters[2]);
+   default:
+      return GetShape(inode)->Safety(local, in);
+   }
+}
+
+Double_t TGeoMultiUnion::NodeDistFromInside(Int_t inode, const Double_t *local, const Double_t *localDir) const
+{
+   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+      return GetShape(inode)->DistFromInside(local, localDir, 3);
+   const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
+   switch (fNodeFlags[inode] & kPrimitiveMask) {
+   case kBoxNode:
+      return TGeoBBox::DistFromInside(local, localDir, parameters[0], parameters[1], parameters[2], parameters + 3);
+   case kTubeNode:
+      return TGeoTube::DistFromInsideS(local, localDir, parameters[0], parameters[1], parameters[2]);
+   default:
+      return GetShape(inode)->DistFromInside(local, localDir, 3);
+   }
+}
+
+Double_t TGeoMultiUnion::NodeDistFromOutside(Int_t inode, const Double_t *local, const Double_t *localDir,
+                                             Double_t step) const
+{
+   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+      return GetShape(inode)->DistFromOutside(local, localDir, 3, step);
+   const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
+   switch (fNodeFlags[inode] & kPrimitiveMask) {
+   case kBoxNode:
+      return TGeoBBox::DistFromOutside(local, localDir, parameters[0], parameters[1], parameters[2], parameters + 3,
+                                       step);
+   case kTubeNode:
+      return TGeoTube::DistFromOutsideS(local, localDir, parameters[0], parameters[1], parameters[2]);
+   default:
+      return GetShape(inode)->DistFromOutside(local, localDir, 3, step);
+   }
 }
 
 Bool_t TGeoMultiUnion::AcceptNode(Int_t inode, const Double_t *point) const
@@ -244,10 +347,33 @@ Bool_t TGeoMultiUnion::CrossesNodeBox(Int_t inode, const Double_t *point, const 
 void TGeoMultiUnion::Voxelize()
 {
    fBoxes.assign(kBoxStride * GetNnodes(), 0.);
+   fNodeFlags.assign(GetNnodes(), kGenericNode);
+   fNodeTranslations.assign(3 * GetNnodes(), 0.);
+   fNodeParameters.assign(kNodeParameterStride * GetNnodes(), 0.);
    Double_t vertices[24];
    Double_t master[3];
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
       auto *shape = GetShape(inode);
+      const auto *matrix = GetMatrix(inode);
+      UChar_t flags = matrix->IsRotation() ? kRotatedNode : 0;
+      if (typeid(*shape) == typeid(TGeoBBox)) {
+         const auto *box = static_cast<TGeoBBox *>(shape);
+         flags |= kBoxNode;
+         Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
+         parameters[0] = box->GetDX();
+         parameters[1] = box->GetDY();
+         parameters[2] = box->GetDZ();
+         std::copy_n(box->GetOrigin(), 3, parameters + 3);
+      } else if (typeid(*shape) == typeid(TGeoTube)) {
+         const auto *tube = static_cast<TGeoTube *>(shape);
+         flags |= kTubeNode;
+         Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
+         parameters[0] = tube->GetRmin();
+         parameters[1] = tube->GetRmax();
+         parameters[2] = tube->GetDz();
+      }
+      fNodeFlags[inode] = flags;
+      std::copy_n(matrix->GetTranslation(), 3, &fNodeTranslations[3 * inode]);
       auto *boxShape = static_cast<TGeoBBox *>(shape);
       if (boxShape->IsNullBox())
          shape->ComputeBBox();
@@ -313,8 +439,8 @@ Bool_t TGeoMultiUnion::Contains(const Double_t *point) const
          const Int_t left = fBVHChildren[2 * treeNode];
          const Int_t right = fBVHChildren[2 * treeNode + 1];
          if (left < 0) {
-            GetMatrix(right)->MasterToLocal(point, local);
-            if (GetShape(right)->Contains(local))
+            TransformPointToNode(right, point, local);
+            if (NodeContains(right, local))
                return kTRUE;
             continue;
          }
@@ -326,8 +452,8 @@ Bool_t TGeoMultiUnion::Contains(const Double_t *point) const
    for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
       if (!AcceptNode(inode, point))
          continue;
-      GetMatrix(inode)->MasterToLocal(point, local);
-      if (GetShape(inode)->Contains(local))
+      TransformPointToNode(inode, point, local);
+      if (NodeContains(inode, local))
          return kTRUE;
    }
    return kFALSE;
@@ -360,14 +486,14 @@ Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
             continue;
          }
          const Bool_t nodeCanContain = ContainsBox(treeBox, point);
-         GetMatrix(right)->MasterToLocal(point, local);
-         const Bool_t nodeInside = nodeCanContain && GetShape(right)->Contains(local);
+         TransformPointToNode(right, point, local);
+         const Bool_t nodeInside = nodeCanContain && NodeContains(right, local);
          if (nodeInside) {
             if (!in)
                return 0.;
-            result = std::min(result, GetShape(right)->Safety(local, kTRUE));
+            result = std::min(result, NodeSafety(right, local, kTRUE));
          } else if (!in) {
-            result = std::min(result, GetShape(right)->Safety(local, kFALSE));
+            result = std::min(result, NodeSafety(right, local, kFALSE));
          }
       }
       return result == TGeoShape::Big() ? 0. : result;
@@ -392,16 +518,16 @@ Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
          if (boxSafety >= result)
             continue;
       }
-      GetMatrix(inode)->MasterToLocal(point, local);
-      const Bool_t nodeInside = nodeCanContain && GetShape(inode)->Contains(local);
+      TransformPointToNode(inode, point, local);
+      const Bool_t nodeInside = nodeCanContain && NodeContains(inode, local);
       if (nodeInside) {
          if (!in)
             return 0.;
-         result = std::min(result, GetShape(inode)->Safety(local, kTRUE));
+         result = std::min(result, NodeSafety(inode, local, kTRUE));
          continue;
       }
       if (!in)
-         result = std::min(result, GetShape(inode)->Safety(local, kFALSE));
+         result = std::min(result, NodeSafety(inode, local, kFALSE));
    }
    return result == TGeoShape::Big() ? 0. : result;
 }
@@ -444,7 +570,7 @@ Double_t TGeoMultiUnion::DistFromOutside(const Double_t *point, const Double_t *
             continue;
          }
          TransformToNode(right, point, dir, local, localDir);
-         result = std::min(result, GetShape(right)->DistFromOutside(local, localDir, 3, limit));
+         result = std::min(result, NodeDistFromOutside(right, local, localDir, limit));
       }
       return result < step ? result : TGeoShape::Big();
    }
@@ -452,7 +578,7 @@ Double_t TGeoMultiUnion::DistFromOutside(const Double_t *point, const Double_t *
       if (!CrossesNodeBox(inode, point, dir, std::min(step, result)))
          continue;
       TransformToNode(inode, point, dir, local, localDir);
-      result = std::min(result, GetShape(inode)->DistFromOutside(local, localDir, 3, std::min(step, result)));
+      result = std::min(result, NodeDistFromOutside(inode, local, localDir, std::min(step, result)));
    }
    return result < step ? result : TGeoShape::Big();
 }
@@ -498,16 +624,16 @@ Double_t TGeoMultiUnion::DistFromInside(const Double_t *point, const Double_t *d
                continue;
             }
             TransformToNode(right, current, dir, local, localDir);
-            if (GetShape(right)->Contains(local))
-               next = std::min(next, GetShape(right)->DistFromInside(local, localDir, 3));
+            if (NodeContains(right, local))
+               next = std::min(next, NodeDistFromInside(right, local, localDir));
          }
       } else {
          for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
             if (!AcceptNode(inode, current))
                continue;
             TransformToNode(inode, current, dir, local, localDir);
-            if (GetShape(inode)->Contains(local))
-               next = std::min(next, GetShape(inode)->DistFromInside(local, localDir, 3));
+            if (NodeContains(inode, local))
+               next = std::min(next, NodeDistFromInside(inode, local, localDir));
          }
       }
       if (next == TGeoShape::Big())

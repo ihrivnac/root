@@ -169,6 +169,27 @@ TEST(TGeoMultiUnion, SmallUnionSafetyUsesNodeBoxLowerBounds)
    EXPECT_EQ(far.fSafetyCalls, 0);
 }
 
+TEST(TGeoMultiUnion, ThreeNodeUnionUsesBalancedBVH)
+{
+   TGeoBBox box(1., 1., 1.);
+   TGeoTranslation left(-5., 0., 0.);
+   TGeoTranslation center(0., 0., 0.);
+   TGeoTranslation right(5., 0., 0.);
+   TGeoMultiUnion shape;
+   shape.AddNode(box, left);
+   shape.AddNode(box, center);
+   shape.AddNode(box, right);
+   EXPECT_FALSE(shape.IsBVHEnabled());
+   shape.Voxelize();
+
+   EXPECT_TRUE(shape.IsBVHEnabled());
+   const double inside[3] = {5., 0., 0.};
+   const double outside[3] = {2.5, 0., 0.};
+   EXPECT_TRUE(shape.Contains(inside));
+   EXPECT_FALSE(shape.Contains(outside));
+   EXPECT_NEAR(shape.Safety(outside, kFALSE), 1.5, kTol);
+}
+
 TEST(TGeoMultiUnion, LargeUnionUsesBVH)
 {
    std::vector<std::unique_ptr<CountingBox>> boxes;
