@@ -71,7 +71,7 @@ public:
    TGeoMatrix *GetTransformation(Int_t inode) const { return GetMatrix(inode); }
    TGeoShape *GetMakeRuntimeShape(TGeoShape *, TGeoMatrix *) const override { return nullptr; }
    void InspectShape() const override;
-   Bool_t IsConvex() const final { return kFALSE; }
+   Bool_t IsConvex() const { return kFALSE; }
    Bool_t IsBVHEnabled() const { return HasBVH(); }
    Bool_t IsCylType() const override { return kFALSE; }
    Bool_t IsVoxelized() const { return fVoxelized; }
