@@ -32,6 +32,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(Geom
     TGeoMaterial.h
     TGeoMatrix.h
     TGeoMultiUnion.h
+    TGeoMultiDifference.h
     TGeoMedium.h
     TGeoNavigator.h
     TGeoNode.h

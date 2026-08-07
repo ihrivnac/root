@@ -1,6 +1,7 @@
 // Author: ROOT team
 
 #include "TGeoMultiUnion.h"
+#include "TGeoMultiDifference.h"
 
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
@@ -18,6 +19,7 @@
 #include <typeinfo>
 
 ClassImp(TGeoMultiUnion);
+ClassImp(TGeoMultiDifference);
 
 namespace {
 constexpr Int_t kBoxStride = 6;
@@ -737,6 +739,558 @@ void TGeoMultiUnion::SavePrimitive(std::ostream &out, Option_t *option)
    for (Int_t inode = 0; inode < GetNnodes(); ++inode)
       out << "   " << GetPointerName() << "->AddNode(" << GetShape(inode)->GetPointerName() << ", "
           << GetMatrix(inode)->GetPointerName() << ");\n";
+   if (fVoxelized)
+      out << "   " << GetPointerName() << "->Voxelize();\n";
+   TObject::SetBit(kGeoSavePrimitive);
+}
+
+TGeoMultiDifference::TGeoMultiDifference() = default;
+
+TGeoMultiDifference::TGeoMultiDifference(const char *name) : TGeoMultiUnion(name) {}
+
+TGeoMultiDifference::~TGeoMultiDifference() = default;
+
+void TGeoMultiDifference::AddPositiveNode(TGeoShape &shape, const TGeoMatrix &matrix)
+{
+   AddPositiveNode(&shape, &matrix);
+}
+
+void TGeoMultiDifference::AddPositiveNode(TGeoShape *shape, const TGeoMatrix *matrix)
+{
+   if (fAddingNegative) {
+      Error("AddPositiveNode", "Positive nodes must be added before negative nodes to %s", GetName());
+      return;
+   }
+   const Int_t previous = GetNnodes();
+   TGeoMultiUnion::AddNode(shape, matrix);
+   if (GetNnodes() != previous) {
+      ++fNpositive;
+      fBVHSignMask.clear();
+      ComputeBBox();
+   }
+}
+
+void TGeoMultiDifference::AddNegativeNode(TGeoShape &shape, const TGeoMatrix &matrix)
+{
+   AddNegativeNode(&shape, &matrix);
+}
+
+void TGeoMultiDifference::AddNegativeNode(TGeoShape *shape, const TGeoMatrix *matrix)
+{
+   if (!fNpositive) {
+      Error("AddNegativeNode", "At least one positive node is required before adding negative nodes to %s", GetName());
+      return;
+   }
+   fAddingNegative = kTRUE;
+   const Int_t previous = GetNnodes();
+   TGeoMultiUnion::AddNode(shape, matrix);
+   if (GetNnodes() != previous)
+      fBVHSignMask.clear();
+}
+
+void TGeoMultiDifference::BuildSignMasks()
+{
+   fBVHSignMask.clear();
+   if (!HasBVH())
+      return;
+   const Int_t treeNodeCount = static_cast<Int_t>(fBVHChildren.size() / 2);
+   fBVHSignMask.resize(treeNodeCount);
+   std::function<UChar_t(Int_t)> buildMask = [&](Int_t treeNode) {
+      const Int_t left = fBVHChildren[2 * treeNode];
+      const Int_t right = fBVHChildren[2 * treeNode + 1];
+      UChar_t mask;
+      if (left < 0) {
+         mask = right < fNpositive ? 1 : 2;
+      } else {
+         mask = buildMask(left) | buildMask(right);
+      }
+      fBVHSignMask[treeNode] = mask;
+      return mask;
+   };
+   buildMask(0);
+}
+
+void TGeoMultiDifference::BuildDifferenceBVH()
+{
+   fHasBVH = kFALSE;
+   fBVHBoxes.clear();
+   fBVHChildren.clear();
+   const Int_t nodeCount = GetNnodes();
+   if (nodeCount <= kSmallUnionNodeLimit || !fNpositive || fNpositive == nodeCount ||
+       fBoxes.size() != static_cast<std::size_t>(kBoxStride * nodeCount))
+      return;
+
+   std::vector<Int_t> indices(nodeCount);
+   std::iota(indices.begin(), indices.end(), 0);
+   fBVHBoxes.reserve(kBoxStride * (2 * nodeCount - 1));
+   fBVHChildren.reserve(2 * (2 * nodeCount - 1));
+
+   std::function<Int_t(Int_t, Int_t)> build = [&](Int_t begin, Int_t end) {
+      const Int_t treeNode = static_cast<Int_t>(fBVHChildren.size() / 2);
+      fBVHChildren.resize(fBVHChildren.size() + 2, -1);
+      fBVHBoxes.resize(fBVHBoxes.size() + kBoxStride);
+      if (end - begin == 1) {
+         fBVHChildren[2 * treeNode + 1] = indices[begin];
+         std::copy_n(&fBoxes[kBoxStride * indices[begin]], kBoxStride, &fBVHBoxes[kBoxStride * treeNode]);
+         return treeNode;
+      }
+
+      Double_t centroidExtent[6] = {TGeoShape::Big(), -TGeoShape::Big(), TGeoShape::Big(),
+                                    -TGeoShape::Big(), TGeoShape::Big(), -TGeoShape::Big()};
+      for (Int_t position = begin; position < end; ++position) {
+         const Double_t *box = &fBoxes[kBoxStride * indices[position]];
+         for (Int_t axis = 0; axis < 3; ++axis) {
+            const Double_t center = box[2 * axis] + box[2 * axis + 1];
+            centroidExtent[2 * axis] = std::min(centroidExtent[2 * axis], center);
+            centroidExtent[2 * axis + 1] = std::max(centroidExtent[2 * axis + 1], center);
+         }
+      }
+      Int_t splitAxis = 0;
+      for (Int_t axis = 1; axis < 3; ++axis) {
+         if (centroidExtent[2 * axis + 1] - centroidExtent[2 * axis] >
+             centroidExtent[2 * splitAxis + 1] - centroidExtent[2 * splitAxis])
+            splitAxis = axis;
+      }
+      const Int_t middle = begin + (end - begin) / 2;
+      std::nth_element(indices.begin() + begin, indices.begin() + middle, indices.begin() + end,
+                       [&](Int_t first, Int_t second) {
+                          const Double_t *firstBox = &fBoxes[kBoxStride * first];
+                          const Double_t *secondBox = &fBoxes[kBoxStride * second];
+                          return firstBox[2 * splitAxis] + firstBox[2 * splitAxis + 1] <
+                                 secondBox[2 * splitAxis] + secondBox[2 * splitAxis + 1];
+                       });
+      const Int_t left = build(begin, middle);
+      const Int_t right = build(middle, end);
+      fBVHChildren[2 * treeNode] = left;
+      fBVHChildren[2 * treeNode + 1] = right;
+      Double_t *treeBox = &fBVHBoxes[kBoxStride * treeNode];
+      const Double_t *leftBox = &fBVHBoxes[kBoxStride * left];
+      const Double_t *rightBox = &fBVHBoxes[kBoxStride * right];
+      for (Int_t axis = 0; axis < 3; ++axis) {
+         treeBox[2 * axis] = std::min(leftBox[2 * axis], rightBox[2 * axis]);
+         treeBox[2 * axis + 1] = std::max(leftBox[2 * axis + 1], rightBox[2 * axis + 1]);
+      }
+      return treeNode;
+   };
+
+   fBVHChildren.resize(2, -1);
+   fBVHBoxes.resize(kBoxStride);
+   const Int_t positiveRoot = build(0, fNpositive);
+   const Int_t negativeRoot = build(fNpositive, nodeCount);
+   fBVHChildren[0] = positiveRoot;
+   fBVHChildren[1] = negativeRoot;
+   Double_t *rootBox = fBVHBoxes.data();
+   const Double_t *positiveBox = &fBVHBoxes[kBoxStride * positiveRoot];
+   const Double_t *negativeBox = &fBVHBoxes[kBoxStride * negativeRoot];
+   for (Int_t axis = 0; axis < 3; ++axis) {
+      rootBox[2 * axis] = std::min(positiveBox[2 * axis], negativeBox[2 * axis]);
+      rootBox[2 * axis + 1] = std::max(positiveBox[2 * axis + 1], negativeBox[2 * axis + 1]);
+   }
+   fHasBVH = kTRUE;
+}
+
+void TGeoMultiDifference::Voxelize()
+{
+   TGeoMultiUnion::Voxelize();
+   BuildDifferenceBVH();
+   BuildSignMasks();
+}
+
+void TGeoMultiDifference::AfterStreamer()
+{
+   fMatrices.SetOwner(kTRUE);
+   fAddingNegative = GetNnegative() > 0;
+   if (fVoxelized)
+      Voxelize();
+   else
+      ComputeBBox();
+}
+
+void TGeoMultiDifference::ComputeBBox()
+{
+   if (!fNpositive) {
+      SetBoxDimensions(0., 0., 0.);
+      return;
+   }
+   const Bool_t restoreVoxelized = fVoxelized;
+   const Bool_t restoreHasBVH = fHasBVH;
+   if (fBoxes.size() != static_cast<std::size_t>(kBoxStride * GetNnodes())) {
+      fVoxelized = kFALSE;
+      TGeoMultiUnion::Voxelize();
+      fVoxelized = restoreVoxelized;
+      fHasBVH = restoreHasBVH;
+   }
+   Double_t extent[6] = {TGeoShape::Big(), -TGeoShape::Big(), TGeoShape::Big(),
+                         -TGeoShape::Big(), TGeoShape::Big(), -TGeoShape::Big()};
+   for (Int_t inode = 0; inode < fNpositive; ++inode) {
+      const Double_t *box = &fBoxes[kBoxStride * inode];
+      for (Int_t axis = 0; axis < 3; ++axis) {
+         extent[2 * axis] = std::min(extent[2 * axis], box[2 * axis]);
+         extent[2 * axis + 1] = std::max(extent[2 * axis + 1], box[2 * axis + 1]);
+      }
+   }
+   Double_t origin[3];
+   for (Int_t axis = 0; axis < 3; ++axis)
+      origin[axis] = .5 * (extent[2 * axis] + extent[2 * axis + 1]);
+   SetBoxDimensions(.5 * (extent[1] - extent[0]), .5 * (extent[3] - extent[2]), .5 * (extent[5] - extent[4]),
+                    origin);
+}
+
+Bool_t TGeoMultiDifference::Contains(const Double_t *point) const
+{
+   if (HasBVH() && fBVHSignMask.size() == fBVHChildren.size() / 2) {
+      if (!GroupContains(point, kTRUE))
+         return kFALSE;
+      return !GroupContains(point, kFALSE);
+   }
+   Double_t local[3];
+   for (Int_t inode = fNpositive; inode < GetNnodes(); ++inode) {
+      if (!AcceptNode(inode, point))
+         continue;
+      TransformPointToNode(inode, point, local);
+      if (NodeContains(inode, local))
+         return kFALSE;
+   }
+   for (Int_t inode = 0; inode < fNpositive; ++inode) {
+      if (!AcceptNode(inode, point))
+         continue;
+      TransformPointToNode(inode, point, local);
+      if (NodeContains(inode, local))
+         return kTRUE;
+   }
+   return kFALSE;
+}
+
+Double_t TGeoMultiDifference::Safety(const Double_t *point, Bool_t in) const
+{
+   struct GroupSafety {
+      Bool_t fInside{kFALSE};
+      Double_t fValue{TGeoShape::Big()};
+   } positive, negative;
+
+   auto visitLeaf = [&](Int_t inode, const Double_t *box) {
+      GroupSafety &group = inode < fNpositive ? positive : negative;
+      const Bool_t nodeCanContain = ContainsBox(box, point);
+      if (!group.fInside && !nodeCanContain && BoxSafety(box, point) >= group.fValue)
+         return;
+      Double_t local[3];
+      TransformPointToNode(inode, point, local);
+      const Bool_t nodeInside = nodeCanContain && NodeContains(inode, local);
+      if (nodeInside) {
+         const Double_t nodeSafety = NodeSafety(inode, local, kTRUE);
+         if (!group.fInside) {
+            group.fInside = kTRUE;
+            group.fValue = nodeSafety;
+         } else {
+            group.fValue = std::min(group.fValue, nodeSafety);
+         }
+      } else if (!group.fInside) {
+         group.fValue = std::min(group.fValue, NodeSafety(inode, local, kFALSE));
+      }
+   };
+
+   if (HasBVH() && fBVHSignMask.size() == fBVHChildren.size() / 2) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         const Double_t *treeBox = &fBVHBoxes[kBoxStride * treeNode];
+         const UChar_t mask = fBVHSignMask[treeNode];
+         const Bool_t needPositive =
+            (mask & 1) && (positive.fInside ? ContainsBox(treeBox, point) : BoxSafety(treeBox, point) < positive.fValue);
+         const Bool_t needNegative =
+            (mask & 2) && (negative.fInside ? ContainsBox(treeBox, point) : BoxSafety(treeBox, point) < negative.fValue);
+         if (!needPositive && !needNegative)
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            stack[stackSize++] = right;
+            stack[stackSize++] = left;
+         } else {
+            visitLeaf(right, treeBox);
+         }
+      }
+   } else {
+      for (Int_t inode = 0; inode < GetNnodes(); ++inode)
+         visitLeaf(inode, &fBoxes[kBoxStride * inode]);
+   }
+
+   const Bool_t actualInside = positive.fInside && !negative.fInside;
+   if (in != actualInside)
+      return 0.;
+   if (positive.fInside && negative.fInside)
+      return negative.fValue;
+   if (positive.fInside)
+      return std::min(positive.fValue, negative.fValue);
+   if (negative.fInside)
+      return std::max(positive.fValue, negative.fValue);
+   return positive.fValue == TGeoShape::Big() ? 0. : positive.fValue;
+}
+
+Bool_t TGeoMultiDifference::GroupContains(const Double_t *point, Bool_t positive) const
+{
+   const UChar_t wantedMask = positive ? 1 : 2;
+   Double_t local[3];
+   if (HasBVH() && fBVHSignMask.size() == fBVHChildren.size() / 2) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         if (!(fBVHSignMask[treeNode] & wantedMask) ||
+             !ContainsBox(&fBVHBoxes[kBoxStride * treeNode], point))
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            stack[stackSize++] = right;
+            stack[stackSize++] = left;
+            continue;
+         }
+         TransformPointToNode(right, point, local);
+         if (NodeContains(right, local))
+            return kTRUE;
+      }
+      return kFALSE;
+   }
+   const Int_t begin = positive ? 0 : fNpositive;
+   const Int_t end = positive ? fNpositive : GetNnodes();
+   for (Int_t inode = begin; inode < end; ++inode) {
+      if (!AcceptNode(inode, point))
+         continue;
+      TransformPointToNode(inode, point, local);
+      if (NodeContains(inode, local))
+         return kTRUE;
+   }
+   return kFALSE;
+}
+
+Double_t TGeoMultiDifference::GroupDistFromOutside(const Double_t *point, const Double_t *dir, Bool_t positive,
+                                                    Double_t step) const
+{
+   const UChar_t wantedMask = positive ? 1 : 2;
+   Double_t result = TGeoShape::Big();
+   Double_t local[3], localDir[3];
+   if (HasBVH() && fBVHSignMask.size() == fBVHChildren.size() / 2) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         const Double_t limit = std::min(step, result);
+         if (!(fBVHSignMask[treeNode] & wantedMask) ||
+             BoxRayDistance(&fBVHBoxes[kBoxStride * treeNode], point, dir, limit) >= limit)
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            stack[stackSize++] = right;
+            stack[stackSize++] = left;
+            continue;
+         }
+         TransformToNode(right, point, dir, local, localDir);
+         result = std::min(result, NodeDistFromOutside(right, local, localDir, limit));
+      }
+   } else {
+      const Int_t begin = positive ? 0 : fNpositive;
+      const Int_t end = positive ? fNpositive : GetNnodes();
+      for (Int_t inode = begin; inode < end; ++inode) {
+         if (!CrossesNodeBox(inode, point, dir, std::min(step, result)))
+            continue;
+         TransformToNode(inode, point, dir, local, localDir);
+         result = std::min(result, NodeDistFromOutside(inode, local, localDir, std::min(step, result)));
+      }
+   }
+   return result < step ? result : TGeoShape::Big();
+}
+
+Double_t TGeoMultiDifference::GroupDistFromInside(const Double_t *point, const Double_t *dir, Bool_t positive,
+                                                   Double_t step) const
+{
+   const UChar_t wantedMask = positive ? 1 : 2;
+   Double_t current[3];
+   std::memcpy(current, point, sizeof(current));
+   Double_t travelled = 0.;
+   constexpr Int_t maxIterations = 10000;
+   for (Int_t iteration = 0; iteration < maxIterations; ++iteration) {
+      Double_t next = TGeoShape::Big();
+      Double_t local[3], localDir[3];
+      if (HasBVH() && fBVHSignMask.size() == fBVHChildren.size() / 2) {
+         std::array<Int_t, kBVHStackSize> stack;
+         std::size_t stackSize = 1;
+         stack[0] = 0;
+         while (stackSize) {
+            const Int_t treeNode = stack[--stackSize];
+            if (!(fBVHSignMask[treeNode] & wantedMask) ||
+                !ContainsBox(&fBVHBoxes[kBoxStride * treeNode], current))
+               continue;
+            const Int_t left = fBVHChildren[2 * treeNode];
+            const Int_t right = fBVHChildren[2 * treeNode + 1];
+            if (left >= 0) {
+               stack[stackSize++] = right;
+               stack[stackSize++] = left;
+               continue;
+            }
+            TransformToNode(right, current, dir, local, localDir);
+            if (NodeContains(right, local))
+               next = std::min(next, NodeDistFromInside(right, local, localDir));
+         }
+      } else {
+         const Int_t begin = positive ? 0 : fNpositive;
+         const Int_t end = positive ? fNpositive : GetNnodes();
+         for (Int_t inode = begin; inode < end; ++inode) {
+            if (!AcceptNode(inode, current))
+               continue;
+            TransformToNode(inode, current, dir, local, localDir);
+            if (NodeContains(inode, local))
+               next = std::min(next, NodeDistFromInside(inode, local, localDir));
+         }
+      }
+      if (next == TGeoShape::Big())
+         return travelled;
+      const Double_t boundary = travelled + std::max(0., next);
+      if (boundary > step)
+         return TGeoShape::Big();
+      const Double_t push = PushDistance(boundary);
+      for (Int_t axis = 0; axis < 3; ++axis)
+         current[axis] = point[axis] + (boundary + push) * dir[axis];
+      if (!GroupContains(current, positive))
+         return boundary;
+      travelled = boundary + push;
+   }
+   Error("GroupDistFromInside", "Navigation did not converge for multi-difference %s", GetName());
+   return TGeoShape::Big();
+}
+
+Double_t TGeoMultiDifference::DistFromInside(const Double_t *point, const Double_t *dir, Int_t iact,
+                                              Double_t step, Double_t *safe) const
+{
+   if (iact < 3 && safe) {
+      *safe = Safety(point, kTRUE);
+      if (iact == 0)
+         return TGeoShape::Big();
+      if (iact == 1 && step < *safe)
+         return TGeoShape::Big();
+   }
+   return std::min(GroupDistFromInside(point, dir, kTRUE, step),
+                   GroupDistFromOutside(point, dir, kFALSE, step));
+}
+
+Double_t TGeoMultiDifference::DistFromOutside(const Double_t *point, const Double_t *dir, Int_t iact,
+                                               Double_t step, Double_t *safe) const
+{
+   if (iact < 3 && safe) {
+      *safe = Safety(point, kFALSE);
+      if (iact == 0)
+         return TGeoShape::Big();
+      if (iact == 1 && step < *safe)
+         return TGeoShape::Big();
+   }
+   if (TGeoBBox::DistFromOutside(point, dir, fDX, fDY, fDZ, fOrigin, step) >= step)
+      return TGeoShape::Big();
+   Double_t current[3];
+   std::memcpy(current, point, sizeof(current));
+   Double_t travelled = 0.;
+   Double_t epsilon = 0.;
+   Bool_t insideNegative = GroupContains(current, kFALSE);
+   constexpr Int_t maxIterations = 10000;
+   for (Int_t iteration = 0; iteration < maxIterations; ++iteration) {
+      if (insideNegative) {
+         const Double_t distance = GroupDistFromInside(current, dir, kFALSE, step);
+         if (distance == TGeoShape::Big())
+            return TGeoShape::Big();
+         travelled += distance + epsilon;
+         for (Int_t axis = 0; axis < 3; ++axis)
+            current[axis] += (distance + 1.e-8) * dir[axis];
+         epsilon = 1.e-8;
+         if (GroupContains(current, kTRUE))
+            return travelled;
+      }
+      const Double_t positiveDistance = GroupDistFromOutside(current, dir, kTRUE, step);
+      if (positiveDistance == TGeoShape::Big())
+         return TGeoShape::Big();
+      const Double_t negativeDistance = GroupDistFromOutside(current, dir, kFALSE, step);
+      if (positiveDistance < negativeDistance - TGeoShape::Tolerance())
+         return travelled + positiveDistance + epsilon;
+      if (negativeDistance == TGeoShape::Big())
+         return travelled + positiveDistance + epsilon;
+      travelled += negativeDistance + epsilon;
+      if (travelled > step)
+         return TGeoShape::Big();
+      for (Int_t axis = 0; axis < 3; ++axis)
+         current[axis] += (negativeDistance + 1.e-8) * dir[axis];
+      epsilon = 1.e-8;
+      insideNegative = kTRUE;
+   }
+   Error("DistFromOutside", "Navigation did not converge for multi-difference %s", GetName());
+   return TGeoShape::Big();
+}
+
+void TGeoMultiDifference::ComputeNormal(const Double_t *point, const Double_t *dir, Double_t *norm) const
+{
+   norm[0] = norm[1] = 0.;
+   norm[2] = 1.;
+   Double_t best = TGeoShape::Big();
+   Double_t local[3], localDir[3], localNorm[3], masterNorm[3];
+   for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+      TransformToNode(inode, point, dir, local, localDir);
+      const Bool_t inside = NodeContains(inode, local);
+      const Double_t distance = NodeSafety(inode, local, inside);
+      if (distance > best)
+         continue;
+      GetShape(inode)->ComputeNormal(local, localDir, localNorm);
+      GetMatrix(inode)->LocalToMasterVect(localNorm, masterNorm);
+      const Double_t dot = masterNorm[0] * dir[0] + masterNorm[1] * dir[1] + masterNorm[2] * dir[2];
+      if (dot < 0.) {
+         masterNorm[0] = -masterNorm[0];
+         masterNorm[1] = -masterNorm[1];
+         masterNorm[2] = -masterNorm[2];
+      }
+      std::memcpy(norm, masterNorm, sizeof(masterNorm));
+      best = distance;
+   }
+}
+
+Double_t TGeoMultiDifference::Capacity() const
+{
+   if (!fNpositive)
+      return 0.;
+   TRandom3 random(0);
+   constexpr Int_t samples = 100000;
+   Int_t inside = 0;
+   Double_t point[3];
+   for (Int_t i = 0; i < samples; ++i) {
+      point[0] = fOrigin[0] - fDX + 2. * fDX * random.Rndm();
+      point[1] = fOrigin[1] - fDY + 2. * fDY * random.Rndm();
+      point[2] = fOrigin[2] - fDZ + 2. * fDZ * random.Rndm();
+      inside += Contains(point);
+   }
+   return 8. * fDX * fDY * fDZ * inside / samples;
+}
+
+void TGeoMultiDifference::InspectShape() const
+{
+   printf("*** TGeoMultiDifference : %s, positive=%d, negative=%d, voxelized=%s\n", GetName(), fNpositive,
+          GetNnegative(), fVoxelized ? "yes" : "no");
+   TGeoBBox::InspectShape();
+}
+
+void TGeoMultiDifference::SavePrimitive(std::ostream &out, Option_t *option)
+{
+   if (TObject::TestBit(kGeoSavePrimitive))
+      return;
+   for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+      GetShape(inode)->SavePrimitive(out, option);
+      GetMatrix(inode)->SavePrimitive(out, option);
+   }
+   out << "   TGeoMultiDifference *" << GetPointerName() << " = new TGeoMultiDifference(\"" << GetName()
+       << "\");\n";
+   for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+      out << "   " << GetPointerName() << "->" << (inode < fNpositive ? "AddPositiveNode" : "AddNegativeNode")
+          << "(" << GetShape(inode)->GetPointerName() << ", " << GetMatrix(inode)->GetPointerName() << ");\n";
+   }
    if (fVoxelized)
       out << "   " << GetPointerName() << "->Voxelize();\n";
    TObject::SetBit(kGeoSavePrimitive);

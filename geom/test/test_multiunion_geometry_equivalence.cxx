@@ -7,6 +7,7 @@
 #include <TGeoMaterial.h>
 #include <TGeoMatrix.h>
 #include <TGeoMedium.h>
+#include <TGeoMultiDifference.h>
 #include <TGeoMultiUnion.h>
 #include <TGeoNavigator.h>
 #include <TGeoNode.h>
@@ -935,24 +936,19 @@ void CheckOptimizedStructure(const GeometryFixture &fixture, std::size_t depth)
 
    auto *shapeMinusUnion = dynamic_cast<TGeoCompositeShape *>(fixture.fShapeMinusUnion->GetShape());
    ASSERT_NE(shapeMinusUnion, nullptr);
-   ASSERT_NE(shapeMinusUnion, fixture.fShapeMinusUnionOriginal);
+   ASSERT_NE(static_cast<TGeoShape *>(shapeMinusUnion), static_cast<TGeoShape *>(fixture.fShapeMinusUnionOriginal));
    ASSERT_EQ(shapeMinusUnion->GetBoolNode()->GetBooleanOperator(), TGeoBoolNode::kGeoSubtraction);
    auto *negative = dynamic_cast<TGeoMultiUnion *>(shapeMinusUnion->GetBoolNode()->GetRightShape());
    ASSERT_NE(negative, nullptr);
    EXPECT_EQ(negative->GetNumberOfSolids(), static_cast<Int_t>(depth));
    ExpectLeafOnly(*negative);
 
-   auto *unionMinusUnion = dynamic_cast<TGeoCompositeShape *>(fixture.fUnionMinusUnion->GetShape());
+   auto *unionMinusUnion = dynamic_cast<TGeoMultiDifference *>(fixture.fUnionMinusUnion->GetShape());
    ASSERT_NE(unionMinusUnion, nullptr);
-   ASSERT_NE(unionMinusUnion, fixture.fUnionMinusUnionOriginal);
-   auto *positive = dynamic_cast<TGeoMultiUnion *>(unionMinusUnion->GetBoolNode()->GetLeftShape());
-   auto *difference = dynamic_cast<TGeoMultiUnion *>(unionMinusUnion->GetBoolNode()->GetRightShape());
-   ASSERT_NE(positive, nullptr);
-   ASSERT_NE(difference, nullptr);
-   EXPECT_EQ(positive->GetNumberOfSolids(), static_cast<Int_t>(depth));
-   EXPECT_EQ(difference->GetNumberOfSolids(), static_cast<Int_t>(depth));
-   ExpectLeafOnly(*positive);
-   ExpectLeafOnly(*difference);
+   ASSERT_NE(static_cast<TGeoShape *>(unionMinusUnion), static_cast<TGeoShape *>(fixture.fUnionMinusUnionOriginal));
+   EXPECT_EQ(unionMinusUnion->GetNpositive(), static_cast<Int_t>(depth));
+   EXPECT_EQ(unionMinusUnion->GetNnegative(), static_cast<Int_t>(depth));
+   ExpectLeafOnly(*unionMinusUnion);
 
    EXPECT_EQ(fixture.fIneligible->GetShape(), fixture.fIneligibleOriginal);
    EXPECT_EQ(fixture.fUnused->GetShape(), fixture.fUnusedOriginal);

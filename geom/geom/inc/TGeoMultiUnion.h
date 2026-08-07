@@ -9,6 +9,7 @@
 #include <vector>
 
 class TGeoMatrix;
+class TGeoMultiDifference;
 
 /// A Boolean union of an arbitrary number of transformed TGeoShape objects.
 ///
@@ -17,6 +18,8 @@ class TGeoMatrix;
 /// used to reject irrelevant shapes during navigation. Constituent shapes are
 /// not owned. Transformation matrices are copied and owned by the multi-union.
 class TGeoMultiUnion : public TGeoBBox {
+   friend class TGeoMultiDifference;
+
 private:
    TObjArray fShapes;              // Constituent shapes (not owned)
    TObjArray fMatrices;            //-> Constituent transformations (owned)

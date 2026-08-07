@@ -186,6 +186,7 @@ criteria. Volumes created based on composite shapes cannot be divided.
 #include "TGeoMatrix.h"
 #include "TGeoBoolNode.h"
 #include "TGeoMultiUnion.h"
+#include "TGeoMultiDifference.h"
 
 #include "TVirtualPad.h"
 #include "TVirtualViewer3D.h"
@@ -281,6 +282,18 @@ TGeoMultiUnion *MakeMultiUnion(const TString &name, const MultiUnionTerms &terms
       multiUnion->AddNode(term.fShape, &term.fMatrix);
    multiUnion->Voxelize();
    return multiUnion;
+}
+
+TGeoMultiDifference *MakeMultiDifference(const TString &name, const MultiUnionTerms &positive,
+                                         const MultiUnionTerms &negative)
+{
+   auto *difference = new TGeoMultiDifference(name);
+   for (const auto &term : positive)
+      difference->AddPositiveNode(term.fShape, &term.fMatrix);
+   for (const auto &term : negative)
+      difference->AddNegativeNode(term.fShape, &term.fMatrix);
+   difference->Voxelize();
+   return difference;
 }
 
 Bool_t AnalyzeOptimization(TGeoCompositeShape *shape, MultiUnionTerms &positive, MultiUnionTerms &negative,
@@ -542,8 +555,7 @@ void TGeoCompositeShape::MakeNode(const char *expression)
 /// represented as one of the following forms:
 ///
 ///  - a union of leaves;
-///  - a leaf minus a union of leaves;
-///  - a union of leaves minus a union of leaves.
+///  - a difference between positive and negative sets of leaves.
 ///
 /// Nested transformations are accumulated into the multi-union nodes. The
 /// rewrite is deliberately conservative: intersections and a subtraction on
@@ -563,19 +575,14 @@ TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves)
       return this;
    if (negative.empty())
       return MakeMultiUnion(OptimizedName(*this, "multiunion"), positive);
+   if (positive.size() > 1)
+      return MakeMultiDifference(OptimizedName(*this, "multidifference"), positive, negative);
 
-   TGeoShape *left = nullptr;
    TGeoMatrix *leftMatrix = nullptr;
-   if (positive.size() == 1) {
-      left = positive.front().fShape;
-      if (!positive.front().fMatrix.IsIdentity())
-         leftMatrix = new TGeoHMatrix(positive.front().fMatrix);
-   } else {
-      left = MakeMultiUnion(OptimizedName(*this, "positive"), positive);
-   }
-
+   if (!positive.front().fMatrix.IsIdentity())
+      leftMatrix = new TGeoHMatrix(positive.front().fMatrix);
    TGeoShape *right = MakeMultiUnion(OptimizedName(*this, "negative"), negative);
-   auto *node = new TGeoSubtraction(left, right, leftMatrix, nullptr);
+   auto *node = new TGeoSubtraction(positive.front().fShape, right, leftMatrix, nullptr);
    return new TGeoCompositeShape(OptimizedName(*this, "optimized"), node);
 }
 
