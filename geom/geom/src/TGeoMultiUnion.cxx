@@ -169,7 +169,7 @@ void TGeoMultiUnion::TransformToNode(Int_t inode, const Double_t *point, const D
 
 void TGeoMultiUnion::TransformPointToNode(Int_t inode, const Double_t *point, Double_t *local) const
 {
-   if (fNodeFlags.size() == static_cast<std::size_t>(GetNnodes()) && !(fNodeFlags[inode] & kRotatedNode)) {
+   if (!fNodeFlags.empty() && !(fNodeFlags[inode] & kRotatedNode)) {
       const Double_t *translation = &fNodeTranslations[3 * inode];
       local[0] = point[0] - translation[0];
       local[1] = point[1] - translation[1];
@@ -181,7 +181,7 @@ void TGeoMultiUnion::TransformPointToNode(Int_t inode, const Double_t *point, Do
 
 void TGeoMultiUnion::TransformDirectionToNode(Int_t inode, const Double_t *dir, Double_t *localDir) const
 {
-   if (fNodeFlags.size() == static_cast<std::size_t>(GetNnodes()) && !(fNodeFlags[inode] & kRotatedNode)) {
+   if (!fNodeFlags.empty() && !(fNodeFlags[inode] & kRotatedNode)) {
       std::memcpy(localDir, dir, 3 * sizeof(Double_t));
       return;
    }
@@ -190,7 +190,7 @@ void TGeoMultiUnion::TransformDirectionToNode(Int_t inode, const Double_t *dir, 
 
 Bool_t TGeoMultiUnion::NodeContains(Int_t inode, const Double_t *local) const
 {
-   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+   if (fNodeFlags.empty())
       return GetShape(inode)->Contains(local);
    const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
    switch (fNodeFlags[inode] & kPrimitiveMask) {
@@ -211,7 +211,7 @@ Bool_t TGeoMultiUnion::NodeContains(Int_t inode, const Double_t *local) const
 
 Double_t TGeoMultiUnion::NodeSafety(Int_t inode, const Double_t *local, Bool_t in) const
 {
-   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+   if (fNodeFlags.empty())
       return GetShape(inode)->Safety(local, in);
    const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
    switch (fNodeFlags[inode] & kPrimitiveMask) {
@@ -230,7 +230,7 @@ Double_t TGeoMultiUnion::NodeSafety(Int_t inode, const Double_t *local, Bool_t i
 
 Double_t TGeoMultiUnion::NodeDistFromInside(Int_t inode, const Double_t *local, const Double_t *localDir) const
 {
-   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+   if (fNodeFlags.empty())
       return GetShape(inode)->DistFromInside(local, localDir, 3);
    const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
    switch (fNodeFlags[inode] & kPrimitiveMask) {
@@ -246,7 +246,7 @@ Double_t TGeoMultiUnion::NodeDistFromInside(Int_t inode, const Double_t *local, 
 Double_t TGeoMultiUnion::NodeDistFromOutside(Int_t inode, const Double_t *local, const Double_t *localDir,
                                              Double_t step) const
 {
-   if (fNodeFlags.size() != static_cast<std::size_t>(GetNnodes()))
+   if (fNodeFlags.empty())
       return GetShape(inode)->DistFromOutside(local, localDir, 3, step);
    const Double_t *parameters = &fNodeParameters[kNodeParameterStride * inode];
    switch (fNodeFlags[inode] & kPrimitiveMask) {
