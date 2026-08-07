@@ -29,6 +29,8 @@ constexpr UChar_t kGenericNode = 0;
 constexpr UChar_t kBoxNode = 1;
 constexpr UChar_t kTubeNode = 2;
 constexpr UChar_t kRotatedNode = 0x4;
+// Thread-cache lookup and near-first traversal cost more than they save for small unions.
+constexpr Int_t kCachedNavigationNodeThreshold = 20;
 
 Bool_t ContainsBox(const Double_t *box, const Double_t *point)
 {
@@ -79,12 +81,12 @@ Double_t PushDistance(Double_t distance)
 }
 } // namespace
 
-TGeoMultiUnion::TGeoMultiUnion() : TGeoBBox(0., 0., 0.)
+TGeoMultiUnion::TGeoMultiUnion() : TGeoBBox(0., 0., 0.), fThreadData(1)
 {
    fMatrices.SetOwner(kTRUE);
 }
 
-TGeoMultiUnion::TGeoMultiUnion(const char *name) : TGeoBBox(name, 0., 0., 0.)
+TGeoMultiUnion::TGeoMultiUnion(const char *name) : TGeoBBox(name, 0., 0., 0.), fThreadData(1)
 {
    fMatrices.SetOwner(kTRUE);
 }
@@ -93,14 +95,28 @@ TGeoMultiUnion::~TGeoMultiUnion() = default;
 
 void TGeoMultiUnion::ClearThreadData() const
 {
+   {
+      std::lock_guard<std::mutex> guard(fThreadMutex);
+      fThreadData.clear();
+   }
    for (Int_t inode = 0; inode < GetNnodes(); ++inode)
       GetShape(inode)->ClearThreadData();
 }
 
 void TGeoMultiUnion::CreateThreadData(Int_t nthreads)
 {
+   {
+      std::lock_guard<std::mutex> guard(fThreadMutex);
+      fThreadData.assign(nthreads, ThreadData_t{});
+   }
    for (Int_t inode = 0; inode < GetNnodes(); ++inode)
       GetShape(inode)->CreateThreadData(nthreads);
+}
+
+TGeoMultiUnion::ThreadData_t &TGeoMultiUnion::GetThreadData() const
+{
+   const Int_t threadId = TGeoManager::ThreadId();
+   return fThreadData[threadId];
 }
 
 void TGeoMultiUnion::AddNode(TGeoShape &shape, const TGeoMatrix &matrix)
@@ -137,12 +153,16 @@ void TGeoMultiUnion::AddNode(TGeoShape *shape, const TGeoMatrix *matrix)
    fNodeFlags.clear();
    fNodeTranslations.clear();
    fNodeParameters.clear();
+   for (auto &cache : fThreadData)
+      cache.fValid = kFALSE;
    ComputeBBox();
 }
 
 void TGeoMultiUnion::AfterStreamer()
 {
    fMatrices.SetOwner(kTRUE);
+   for (auto &cache : fThreadData)
+      cache.fValid = kFALSE;
    if (fVoxelized)
       Voxelize();
    else
@@ -427,6 +447,9 @@ void TGeoMultiUnion::ComputeBBox()
 
 Bool_t TGeoMultiUnion::Contains(const Double_t *point) const
 {
+   if (GetNnodes() >= kCachedNavigationNodeThreshold)
+      return ContainsCached(point);
+
    Double_t local[3];
    if (HasBVH()) {
       std::array<Int_t, kBVHStackSize> stack;
@@ -459,6 +482,54 @@ Bool_t TGeoMultiUnion::Contains(const Double_t *point) const
    return kFALSE;
 }
 
+Bool_t TGeoMultiUnion::ContainsCached(const Double_t *point) const
+{
+   ThreadData_t *cache = &GetThreadData();
+   if (cache->fValid && point[0] == cache->fPoint[0] && point[1] == cache->fPoint[1] &&
+       point[2] == cache->fPoint[2])
+      return cache->fInside;
+   const auto storeResult = [&](Bool_t inside, Int_t containingNode) {
+      std::copy_n(point, 3, cache->fPoint);
+      cache->fContainingNode = containingNode;
+      cache->fInside = inside;
+      cache->fValid = kTRUE;
+      return inside;
+   };
+
+   Double_t local[3];
+   if (HasBVH()) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         if (!ContainsBox(&fBVHBoxes[kBoxStride * treeNode], point))
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left < 0) {
+            TransformPointToNode(right, point, local);
+            if (NodeContains(right, local)) {
+               return storeResult(kTRUE, right);
+            }
+            continue;
+         }
+         stack[stackSize++] = right;
+         stack[stackSize++] = left;
+      }
+      return storeResult(kFALSE, -1);
+   }
+   for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+      if (!AcceptNode(inode, point))
+         continue;
+      TransformPointToNode(inode, point, local);
+      if (NodeContains(inode, local)) {
+         return storeResult(kTRUE, inode);
+      }
+   }
+   return storeResult(kFALSE, -1);
+}
+
 void TGeoMultiUnion::Contains_v(const Double_t *points, Bool_t *inside, Int_t vecsize) const
 {
    for (Int_t i = 0; i < vecsize; ++i)
@@ -467,6 +538,9 @@ void TGeoMultiUnion::Contains_v(const Double_t *points, Bool_t *inside, Int_t ve
 
 Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
 {
+   if (GetNnodes() >= kCachedNavigationNodeThreshold)
+      return SafetyCached(point, in);
+
    Double_t result = TGeoShape::Big();
    Double_t local[3];
    if (HasBVH()) {
@@ -520,6 +594,116 @@ Double_t TGeoMultiUnion::Safety(const Double_t *point, Bool_t in) const
       }
       TransformPointToNode(inode, point, local);
       const Bool_t nodeInside = nodeCanContain && NodeContains(inode, local);
+      if (nodeInside) {
+         if (!in)
+            return 0.;
+         result = std::min(result, NodeSafety(inode, local, kTRUE));
+         continue;
+      }
+      if (!in)
+         result = std::min(result, NodeSafety(inode, local, kFALSE));
+   }
+   return result == TGeoShape::Big() ? 0. : result;
+}
+
+Double_t TGeoMultiUnion::SafetyCached(const Double_t *point, Bool_t in) const
+{
+   Double_t result = TGeoShape::Big();
+   Double_t local[3];
+   const ThreadData_t *cache = &GetThreadData();
+   const Bool_t useContainsCache = cache->fValid && cache->fInside == in &&
+                                   point[0] == cache->fPoint[0] && point[1] == cache->fPoint[1] &&
+                                   point[2] == cache->fPoint[2];
+   if (HasBVH() && !in && GetNnodes() >= kCachedNavigationNodeThreshold) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::array<Double_t, kBVHStackSize> bounds;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      bounds[0] = BoxSafety(&fBVHBoxes[0], point);
+      while (stackSize) {
+         --stackSize;
+         const Int_t treeNode = stack[stackSize];
+         const Double_t *treeBox = &fBVHBoxes[kBoxStride * treeNode];
+         if (bounds[stackSize] >= result)
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            const Double_t leftBound = BoxSafety(&fBVHBoxes[kBoxStride * left], point);
+            const Double_t rightBound = BoxSafety(&fBVHBoxes[kBoxStride * right], point);
+            const Bool_t leftFirst = leftBound <= rightBound;
+            stack[stackSize] = leftFirst ? right : left;
+            bounds[stackSize++] = leftFirst ? rightBound : leftBound;
+            stack[stackSize] = leftFirst ? left : right;
+            bounds[stackSize++] = leftFirst ? leftBound : rightBound;
+            continue;
+         }
+         const Bool_t nodeCanContain = ContainsBox(treeBox, point);
+         TransformPointToNode(right, point, local);
+         if (!useContainsCache && nodeCanContain && NodeContains(right, local))
+            return 0.;
+         result = std::min(result, NodeSafety(right, local, kFALSE));
+      }
+      return result == TGeoShape::Big() ? 0. : result;
+   }
+   if (HasBVH()) {
+      std::array<Int_t, kBVHStackSize> stack;
+      std::size_t stackSize = 1;
+      stack[0] = 0;
+      while (stackSize) {
+         const Int_t treeNode = stack[--stackSize];
+         const Double_t *treeBox = &fBVHBoxes[kBoxStride * treeNode];
+         if ((in && !ContainsBox(treeBox, point)) || (!in && BoxSafety(treeBox, point) >= result))
+            continue;
+         const Int_t left = fBVHChildren[2 * treeNode];
+         const Int_t right = fBVHChildren[2 * treeNode + 1];
+         if (left >= 0) {
+            stack[stackSize++] = right;
+            stack[stackSize++] = left;
+            continue;
+         }
+         const Bool_t nodeCanContain = ContainsBox(treeBox, point);
+         TransformPointToNode(right, point, local);
+         const Bool_t nodeInside = useContainsCache && right == cache->fContainingNode
+                                      ? kTRUE
+                                      : nodeCanContain && NodeContains(right, local);
+         if (nodeInside) {
+            if (!in)
+               return 0.;
+            result = std::min(result, NodeSafety(right, local, kTRUE));
+         } else if (!in) {
+            result = std::min(result, NodeSafety(right, local, kFALSE));
+         }
+      }
+      return result == TGeoShape::Big() ? 0. : result;
+   }
+   const Bool_t useSmallUnionFastPath = !in && GetNnodes() <= kSmallUnionNodeLimit && fVoxelized &&
+                                        fBoxes.size() == static_cast<std::size_t>(kBoxStride * GetNnodes());
+   for (Int_t inode = 0; inode < GetNnodes(); ++inode) {
+      if (in && !AcceptNode(inode, point))
+         continue;
+      Bool_t nodeCanContain = kTRUE;
+      if (useSmallUnionFastPath) {
+         const Double_t *box = &fBoxes[kBoxStride * inode];
+         const Double_t tolerance = TGeoShape::Tolerance();
+         Double_t boxSafety = 0.;
+         for (Int_t axis = 0; axis < 3; ++axis) {
+            const Double_t gap = std::max(box[2 * axis] - point[axis], point[axis] - box[2 * axis + 1]);
+            if (gap > tolerance) {
+               nodeCanContain = kFALSE;
+               boxSafety = std::max(boxSafety, gap - tolerance);
+            }
+         }
+         if (boxSafety >= result)
+            continue;
+      }
+      TransformPointToNode(inode, point, local);
+      Bool_t nodeInside = kFALSE;
+      if (!useContainsCache || in) {
+         nodeInside = useContainsCache && inode == cache->fContainingNode
+                         ? kTRUE
+                         : nodeCanContain && NodeContains(inode, local);
+      }
       if (nodeInside) {
          if (!in)
             return 0.;

@@ -6,6 +6,7 @@
 #include "TGeoBBox.h"
 #include "TObjArray.h"
 
+#include <mutex>
 #include <vector>
 
 class TGeoMatrix;
@@ -18,6 +19,13 @@ class TGeoMatrix;
 /// not owned. Transformation matrices are copied and owned by the multi-union.
 class TGeoMultiUnion : public TGeoBBox {
 private:
+   struct ThreadData_t {
+      Double_t fPoint[3]{0., 0., 0.};
+      Int_t fContainingNode{-1};
+      Bool_t fInside{kFALSE};
+      Bool_t fValid{kFALSE};
+   };
+
    TObjArray fShapes;              // Constituent shapes (not owned)
    TObjArray fMatrices;            //-> Constituent transformations (owned)
    Bool_t fVoxelized{kFALSE};      // Whether the acceleration data is current
@@ -28,18 +36,23 @@ private:
    std::vector<UChar_t> fNodeFlags;   ///<! Primitive and transformation fast-path flags
    std::vector<Double_t> fNodeTranslations;   ///<! Cached node translations
    std::vector<Double_t> fNodeParameters;   ///<! Cached box/tube parameters
+   mutable std::vector<ThreadData_t> fThreadData;   ///<! Per-thread point-classification cache
+   mutable std::mutex fThreadMutex;   ///<! Protects thread-data setup
 
    TGeoMultiUnion(const TGeoMultiUnion &) = delete;
    TGeoMultiUnion &operator=(const TGeoMultiUnion &) = delete;
 
    Bool_t AcceptNode(Int_t inode, const Double_t *point) const;
    void BuildBVH();
+   Bool_t ContainsCached(const Double_t *point) const;
    Bool_t CrossesNodeBox(Int_t inode, const Double_t *point, const Double_t *dir, Double_t step) const;
+   ThreadData_t &GetThreadData() const;
    Bool_t HasBVH() const { return fHasBVH; }
    Bool_t NodeContains(Int_t inode, const Double_t *local) const;
    Double_t NodeDistFromInside(Int_t inode, const Double_t *local, const Double_t *localDir) const;
    Double_t NodeDistFromOutside(Int_t inode, const Double_t *local, const Double_t *localDir, Double_t step) const;
    Double_t NodeSafety(Int_t inode, const Double_t *local, Bool_t in) const;
+   Double_t SafetyCached(const Double_t *point, Bool_t in) const;
    void TransformDirectionToNode(Int_t inode, const Double_t *dir, Double_t *localDir) const;
    void TransformPointToNode(Int_t inode, const Double_t *point, Double_t *local) const;
    void TransformToNode(Int_t inode, const Double_t *point, const Double_t *dir, Double_t *local,

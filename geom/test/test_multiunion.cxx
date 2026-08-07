@@ -5,6 +5,7 @@
 #include <TGeoBBox.h>
 #include <TGeoMatrix.h>
 #include <TGeoMultiUnion.h>
+#include <TGeoTube.h>
 
 #include <memory>
 #include <vector>
@@ -32,6 +33,26 @@ public:
    {
       fContainsCalls = 0;
       fSafetyCalls = 0;
+   }
+
+   mutable int fContainsCalls = 0;
+   mutable int fSafetyCalls = 0;
+};
+
+class CountingTube : public TGeoTube {
+public:
+   using TGeoTube::TGeoTube;
+
+   Bool_t Contains(const Double_t *point) const override
+   {
+      ++fContainsCalls;
+      return TGeoTube::Contains(point);
+   }
+
+   Double_t Safety(const Double_t *point, Bool_t in = kTRUE) const override
+   {
+      ++fSafetyCalls;
+      return TGeoTube::Safety(point, in);
    }
 
    mutable int fContainsCalls = 0;
@@ -188,6 +209,46 @@ TEST(TGeoMultiUnion, ThreeNodeUnionUsesBalancedBVH)
    EXPECT_TRUE(shape.Contains(inside));
    EXPECT_FALSE(shape.Contains(outside));
    EXPECT_NEAR(shape.Safety(outside, kFALSE), 1.5, kTol);
+}
+
+TEST(TGeoMultiUnion, SafetyReusesOutsideContainsClassification)
+{
+   CountingTube tube(0., 1., 1.);
+   TGeoMultiUnion shape;
+   shape.AddNode(&tube);
+   for (int index = 1; index < 20; ++index) {
+      TGeoTranslation far(100. * index, 0., 0.);
+      shape.AddNode(tube, far);
+   }
+   shape.Voxelize();
+
+   const double outsideTubeInsideBox[3] = {0.9, 0.9, 0.};
+   EXPECT_FALSE(shape.Contains(outsideTubeInsideBox));
+   EXPECT_EQ(tube.fContainsCalls, 1);
+   tube.fContainsCalls = 0;
+
+   EXPECT_GT(shape.Safety(outsideTubeInsideBox, kFALSE), 0.);
+   EXPECT_EQ(tube.fContainsCalls, 0);
+   EXPECT_EQ(tube.fSafetyCalls, 1);
+}
+
+TEST(TGeoMultiUnion, InsideCacheStillClassifiesOverlappingNodes)
+{
+   TGeoBBox wide(2., 2., 2.);
+   TGeoBBox narrow(1., 1., 1.);
+   TGeoTranslation shifted(0.9, 0., 0.);
+   TGeoMultiUnion shape;
+   shape.AddNode(&wide);
+   shape.AddNode(narrow, shifted);
+   for (int index = 2; index < 20; ++index) {
+      TGeoTranslation far(100. * index, 0., 0.);
+      shape.AddNode(wide, far);
+   }
+   shape.Voxelize();
+
+   const double point[3] = {0., 0., 0.};
+   EXPECT_TRUE(shape.Contains(point));
+   EXPECT_NEAR(shape.Safety(point, kTRUE), 0.1, kTol);
 }
 
 TEST(TGeoMultiUnion, LargeUnionUsesBVH)
