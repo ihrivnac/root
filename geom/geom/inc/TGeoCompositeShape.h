@@ -66,11 +66,11 @@ public:
    Bool_t IsComposite() const override { return kTRUE; }
    Bool_t IsConvex() const final { return kFALSE; }
    Bool_t IsCylType() const override { return kFALSE; }
-   Bool_t CanOptimize(Int_t minimumLeaves = 3) const;
+   Bool_t CanOptimize(Int_t minimumLeaves = 3, Int_t minimumMultiDifferenceLeaves = -1) const;
    void InvalidateMeshCaches();
    void MakeNode(const char *expression);
    /// Return a multi-union-based equivalent when the Boolean tree can be flattened, otherwise return this shape.
-   TGeoShape *Optimize(Int_t minimumLeaves = 3);
+   TGeoShape *Optimize(Int_t minimumLeaves = 3, Int_t minimumMultiDifferenceLeaves = -1);
    virtual Bool_t PaintComposite(Option_t *option = "") const;
    void RegisterYourself();
    Double_t Safety(const Double_t *point, Bool_t in = kTRUE) const override;

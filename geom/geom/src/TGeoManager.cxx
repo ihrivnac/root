@@ -1637,11 +1637,18 @@ void TGeoManager::CloseGeometry(Option_t *option)
 /// (minimumLeaves <= 0), the measured automatic threshold of 10 primitive
 /// leaves is used. A positive value overrides this policy; values below 3 are
 /// clamped because a two-leaf Boolean cannot benefit from this rewrite.
+/// minimumMultiDifferenceLeaves controls shapes that flatten to multiple
+/// positive leaves minus negative leaves. A negative value makes these inherit
+/// minimumLeaves, while zero or a positive value selects an independent
+/// threshold (also clamped to 3).
 
-Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace, Int_t minimumLeaves)
+Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace, Int_t minimumLeaves,
+                                            Int_t minimumMultiDifferenceLeaves)
 {
    constexpr Int_t automaticMinimumLeaves = 10;
    const Int_t leafThreshold = minimumLeaves <= 0 ? automaticMinimumLeaves : std::max(3, minimumLeaves);
+   const Int_t multiDifferenceThreshold =
+      minimumMultiDifferenceLeaves < 0 ? leafThreshold : std::max(3, minimumMultiDifferenceLeaves);
    TGeoVolume *rootVolume = fMasterVolume ? fMasterVolume : fTopVolume;
    if (!rootVolume) {
       Info("OptimizeCompositeShapes", "Optimized 0 of 0 placed composite shapes%s",
@@ -1682,13 +1689,13 @@ Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace, Int_t minimumLeaves)
    Int_t optimized = 0;
    for (std::size_t index = 0; index < placedComposites.size(); ++index) {
       TGeoCompositeShape *composite = placedComposites[index];
-      if (!composite->CanOptimize(leafThreshold))
+      if (!composite->CanOptimize(leafThreshold, multiDifferenceThreshold))
          continue;
       ++optimized;
       if (!replace)
          continue;
 
-      TGeoShape *replacement = composite->Optimize(leafThreshold);
+      TGeoShape *replacement = composite->Optimize(leafThreshold, multiDifferenceThreshold);
       if (replacement == composite)
          continue;
       for (TGeoVolume *volume : compositeVolumes[index])
@@ -1705,8 +1712,9 @@ Int_t TGeoManager::OptimizeCompositeShapes(Bool_t replace, Int_t minimumLeaves)
       ModifiedPad();
    }
 
-   Info("OptimizeCompositeShapes", "Optimized %d of %zu placed composite shapes with at least %d leaves%s",
-        optimized, placedComposites.size(), leafThreshold,
+   Info("OptimizeCompositeShapes",
+        "Optimized %d of %zu placed composite shapes with at least %d leaves (%d for multi-differences)%s",
+        optimized, placedComposites.size(), leafThreshold, multiDifferenceThreshold,
         replace ? " and replaced their volume references" : " (dry run)");
    return optimized;
 }

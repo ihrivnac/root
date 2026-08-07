@@ -297,18 +297,22 @@ TGeoMultiDifference *MakeMultiDifference(const TString &name, const MultiUnionTe
 }
 
 Bool_t AnalyzeOptimization(TGeoCompositeShape *shape, MultiUnionTerms &positive, MultiUnionTerms &negative,
-                           Int_t minimumLeaves)
+                           Int_t minimumLeaves, Int_t minimumMultiDifferenceLeaves)
 {
-   const auto threshold = static_cast<std::size_t>(std::max(3, minimumLeaves));
+   const auto unionThreshold = static_cast<std::size_t>(std::max(3, minimumLeaves));
+   const auto multiDifferenceThreshold = static_cast<std::size_t>(
+      minimumMultiDifferenceLeaves < 0 ? unionThreshold : std::max(3, minimumMultiDifferenceLeaves));
    TGeoHMatrix identity;
    Bool_t hasComposite = kFALSE;
    if (CollectUnionTerms(shape, identity, positive, hasComposite))
-      return hasComposite && positive.size() >= threshold;
+      return hasComposite && positive.size() >= unionThreshold;
 
    positive.clear();
    hasComposite = kFALSE;
-   return CollectDifferenceTerms(shape, identity, positive, negative, hasComposite) && hasComposite &&
-          !negative.empty() && positive.size() + negative.size() >= threshold;
+   if (!CollectDifferenceTerms(shape, identity, positive, negative, hasComposite) || !hasComposite || negative.empty())
+      return kFALSE;
+   const auto threshold = positive.size() > 1 ? multiDifferenceThreshold : unionThreshold;
+   return positive.size() + negative.size() >= threshold;
 }
 
 } // namespace
@@ -564,14 +568,14 @@ void TGeoCompositeShape::MakeNode(const char *expression)
 /// this object is returned. The optimized result is a newly allocated shape
 /// registered with the current TGeoManager, as for other named TGeo shapes.
 
-TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves)
+TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves, Int_t minimumMultiDifferenceLeaves)
 {
    if (!fNode)
       return this;
 
    MultiUnionTerms positive;
    MultiUnionTerms negative;
-   if (!AnalyzeOptimization(this, positive, negative, minimumLeaves))
+   if (!AnalyzeOptimization(this, positive, negative, minimumLeaves, minimumMultiDifferenceLeaves))
       return this;
    if (negative.empty())
       return MakeMultiUnion(OptimizedName(*this, "multiunion"), positive);
@@ -590,13 +594,14 @@ TGeoShape *TGeoCompositeShape::Optimize(Int_t minimumLeaves)
 /// Return whether Optimize() can replace this shape without constructing the
 /// replacement. This is used for side-effect-free geometry-wide dry runs.
 
-Bool_t TGeoCompositeShape::CanOptimize(Int_t minimumLeaves) const
+Bool_t TGeoCompositeShape::CanOptimize(Int_t minimumLeaves, Int_t minimumMultiDifferenceLeaves) const
 {
    if (!fNode)
       return kFALSE;
    MultiUnionTerms positive;
    MultiUnionTerms negative;
-   return AnalyzeOptimization(const_cast<TGeoCompositeShape *>(this), positive, negative, minimumLeaves);
+   return AnalyzeOptimization(const_cast<TGeoCompositeShape *>(this), positive, negative, minimumLeaves,
+                              minimumMultiDifferenceLeaves);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

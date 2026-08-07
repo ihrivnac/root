@@ -7,6 +7,7 @@
 #include <TGeoMaterial.h>
 #include <TGeoMatrix.h>
 #include <TGeoMedium.h>
+#include <TGeoMultiDifference.h>
 #include <TGeoMultiUnion.h>
 #include <TGeoVolume.h>
 #include <TGeoVoxelFinder.h>
@@ -124,4 +125,50 @@ TEST(TGeoManagerOptimizeCompositeShapes, AppliesAutomaticMinimumLeafThreshold)
    auto *shallowReplacement = dynamic_cast<TGeoMultiUnion *>(shallowVolume->GetShape());
    ASSERT_NE(shallowReplacement, nullptr);
    EXPECT_EQ(shallowReplacement->GetNumberOfSolids(), 4);
+}
+
+TEST(TGeoManagerOptimizeCompositeShapes, AppliesIndependentMultiDifferenceThreshold)
+{
+   TGeoManager manager("manager_mixed_threshold", "manager mixed threshold test");
+   auto *material = new TGeoMaterial("mixed_threshold_material", 1., 1., 1.);
+   auto *medium = new TGeoMedium("mixed_threshold_medium", 1, material);
+   auto *top =
+      new TGeoVolume("mixed_threshold_top", new TGeoBBox("mixed_threshold_top_box", 100., 100., 100.), medium);
+   manager.SetTopVolume(top);
+
+   auto *ordinaryUnion = MakeNestedUnion("small_ordinary_union", 3);
+
+   auto *positiveUnion = MakeNestedUnion("small_positive_union", 2);
+   auto *negativeLeaf = new TGeoBBox("small_negative_leaf", 1., 1., 1.);
+   auto *multiDifference =
+      new TGeoCompositeShape("small_multi_difference", new TGeoSubtraction(positiveUnion, negativeLeaf));
+
+   auto *positiveLeaf = new TGeoBBox("small_positive_leaf", 1., 1., 1.);
+   auto *negativeUnion = MakeNestedUnion("small_negative_union", 2);
+   auto *singleMinusUnion =
+      new TGeoCompositeShape("small_single_minus_union", new TGeoSubtraction(positiveLeaf, negativeUnion));
+
+   auto *ordinaryVolume = new TGeoVolume("small_ordinary_volume", ordinaryUnion, medium);
+   auto *multiDifferenceVolume = new TGeoVolume("small_multi_difference_volume", multiDifference, medium);
+   auto *singleMinusUnionVolume = new TGeoVolume("small_single_minus_union_volume", singleMinusUnion, medium);
+   top->AddNode(ordinaryVolume, 1, new TGeoTranslation(-20., 0., 0.));
+   top->AddNode(multiDifferenceVolume, 1);
+   top->AddNode(singleMinusUnionVolume, 1, new TGeoTranslation(20., 0., 0.));
+   manager.CloseGeometry();
+
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kFALSE, 6), 0);
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kFALSE, 6, 3), 1);
+   EXPECT_EQ(ordinaryVolume->GetShape(), ordinaryUnion);
+   EXPECT_EQ(multiDifferenceVolume->GetShape(), multiDifference);
+   EXPECT_EQ(singleMinusUnionVolume->GetShape(), singleMinusUnion);
+
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kTRUE, 6, 3), 1);
+   auto *replacement = dynamic_cast<TGeoMultiDifference *>(multiDifferenceVolume->GetShape());
+   ASSERT_NE(replacement, nullptr);
+   EXPECT_EQ(replacement->GetNpositive(), 2);
+   EXPECT_EQ(replacement->GetNnegative(), 1);
+   EXPECT_EQ(ordinaryVolume->GetShape(), ordinaryUnion);
+   EXPECT_EQ(singleMinusUnionVolume->GetShape(), singleMinusUnion);
+
+   EXPECT_EQ(manager.OptimizeCompositeShapes(kTRUE, 6, 3), 0);
 }

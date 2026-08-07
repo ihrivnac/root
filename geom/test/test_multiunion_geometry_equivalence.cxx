@@ -41,6 +41,7 @@ constexpr Double_t kDistanceRelTolerance = 1.e-9;
 struct TestConfig {
    std::uint64_t fSeed{0x5eed1234ULL};
    std::size_t fDepth{4};
+   std::size_t fMultiDifferenceDepth{4};
    std::size_t fPointCount{2000};
    std::size_t fRayCount{500};
    std::size_t fMaxBoundaries{64};
@@ -211,6 +212,8 @@ TestConfig GetConfig()
    }
    config.fSeed = ReadSeed("TGEOMU_SEED", config.fSeed);
    config.fDepth = ReadSize("TGEOMU_DEPTH", config.fDepth);
+   config.fMultiDifferenceDepth =
+      ReadSize("TGEOMU_MULTI_DIFFERENCE_DEPTH", config.fDepth);
    config.fPointCount = ReadSize("TGEOMU_POINTS", config.fPointCount);
    config.fRayCount = ReadSize("TGEOMU_RAYS", config.fRayCount);
    config.fMaxBoundaries = ReadSize("TGEOMU_MAX_BOUNDARIES", config.fMaxBoundaries);
@@ -633,7 +636,8 @@ std::size_t CountPrimitiveLeaves(const TGeoShape &shape)
           CountPrimitiveLeaves(*composite->GetBoolNode()->GetRightShape());
 }
 
-std::vector<ShapeCandidate> FindShapeCandidates(TGeoManager &manager, std::size_t minimumDepth)
+std::vector<ShapeCandidate> FindShapeCandidates(TGeoManager &manager, std::size_t minimumDepth,
+                                                std::size_t minimumMultiDifferenceDepth)
 {
    std::vector<ShapeCandidate> candidates;
    std::unordered_set<TGeoCompositeShape *> seen;
@@ -644,11 +648,11 @@ std::vector<ShapeCandidate> FindShapeCandidates(TGeoManager &manager, std::size_
    const Int_t entries = shapes->GetEntriesFast();
    for (Int_t index = 0; index < entries; ++index) {
       auto *composite = dynamic_cast<TGeoCompositeShape *>(shapes->At(index));
-      if (!composite || !seen.insert(composite).second || !composite->CanOptimize())
+      if (!composite || !seen.insert(composite).second ||
+          !composite->CanOptimize(static_cast<Int_t>(minimumDepth),
+                                  static_cast<Int_t>(minimumMultiDifferenceDepth)))
          continue;
       const std::size_t leaves = CountPrimitiveLeaves(*composite);
-      if (leaves < minimumDepth)
-         continue;
       const char *name = composite->GetName();
       candidates.push_back({composite, nullptr, leaves, name && name[0] ? name : "<unnamed>"});
    }
@@ -815,10 +819,11 @@ void RunImportedGeometryTest(const TestConfig &config, const char *filename)
    TGeoManager *manager = TGeoManager::Import(filename, keyName ? keyName : "");
    ASSERT_NE(manager, nullptr) << "Could not import geometry file " << filename;
 
-   auto candidates = FindShapeCandidates(*manager, config.fDepth);
+   auto candidates = FindShapeCandidates(*manager, config.fDepth, config.fMultiDifferenceDepth);
    std::cout << "\nTGeoMultiUnion imported geometry scan\n"
              << "  File: " << filename << "\n"
-             << "  Minimum component depth: " << config.fDepth << "\n"
+             << "  Minimum component depth: " << config.fDepth << " (" << config.fMultiDifferenceDepth
+             << " for multi-differences)\n"
              << "  Optimizable composite shapes selected: " << candidates.size() << "\n";
    for (std::size_t index = 0; index < candidates.size(); ++index)
       std::cout << "    [" << index << "] " << candidates[index].fName << " (leaves=" << candidates[index].fLeaves
@@ -840,7 +845,9 @@ void RunImportedGeometryTest(const TestConfig &config, const char *filename)
       auto &candidate = candidates[index];
       const std::uint64_t seed = config.fSeed ^ (0x9e3779b97f4a7c15ULL * (index + 1));
       const ShapeQueryCorpus corpus = MakeShapeQueries(*candidate.fOriginal, pointsPerShape, raysPerShape, seed);
-      candidate.fOptimized = candidate.fOriginal->Optimize();
+      candidate.fOptimized =
+         candidate.fOriginal->Optimize(static_cast<Int_t>(config.fDepth),
+                                        static_cast<Int_t>(config.fMultiDifferenceDepth));
       ASSERT_NE(candidate.fOptimized, candidate.fOriginal);
       const std::string diagnosticName = "[" + std::to_string(index) + "] " + candidate.fName +
                                          " (leaves=" + std::to_string(candidate.fLeaves) + ")";
@@ -961,6 +968,10 @@ TEST(TGeoMultiUnionGeometryEquivalence, ComplexGeometryNavigation)
    const TestConfig config = GetConfig();
    ASSERT_GE(config.fDepth, 3U) << "TGEOMU_DEPTH must be between 3 and 50";
    ASSERT_LE(config.fDepth, 50U) << "TGEOMU_DEPTH must be between 3 and 50";
+   ASSERT_GE(config.fMultiDifferenceDepth, 3U)
+      << "TGEOMU_MULTI_DIFFERENCE_DEPTH must be between 3 and 50";
+   ASSERT_LE(config.fMultiDifferenceDepth, 50U)
+      << "TGEOMU_MULTI_DIFFERENCE_DEPTH must be between 3 and 50";
    if (const char *filename = GeometryFile()) {
       RunImportedGeometryTest(config, filename);
       return;
